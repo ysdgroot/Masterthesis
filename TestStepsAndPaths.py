@@ -12,10 +12,9 @@ add_header = True
 write_comment_info = True
 
 
-
 # time_steps_per_maturities = [10 + i * 10 for i in range(20)]
 # amount_paths = [100 + i * 100 for i in range(15)]
-file_name = 'Test - steps and paths accuracy -v3.csv'
+file_name = 'Test - steps and paths accuracy -v4.csv'
 maturity = 5
 interest_rate = 0.001
 volatitlity = 0.1
@@ -41,15 +40,14 @@ if write_comment_info:
 
 # write header (if necessary)
 if add_header:
-    col_names = ['time_step', 'paths', 'time', 'accuracy_absolute', 'accuracy_normal', 'variance', 'maturity',
-             'interest_rate', 'volatility', 'exact_value']
+    col_names = ['time_step', 'paths', 'time', 'accuracy_absolute', 'accuracy_normal', 'max_abs_diff', 'min_rel_diff',
+                 'max_rel_diff', 'variance', 'maturity', 'interest_rate', 'volatility', 'exact_value']
     with open(file_name, 'a', newline='') as fd:
         writer = csv.writer(fd)
         writer.writerow(col_names)
 
-#todo: bekijken van min/max verschil tussen het werkelijk
-def get_variance_call(paths, strike_price):
-    return np.var(paths[:, -1] * (paths[:, -1] > strike_price))
+# def get_variance_call(paths, strike_price):
+#     return np.var(paths[:, -1] * (paths[:, -1] > strike_price))
 
 for amount in amount_paths:
     for time_step in time_steps_per_maturities:
@@ -58,6 +56,8 @@ for amount in amount_paths:
         absolute_rel_diff = 0
         rel_diff = 0
         max_abs_diff = 0
+        min_rel_diff = math.inf
+        max_rel_diff = 0
 
         variance = 0
         for i in range(number_iterations):
@@ -70,19 +70,22 @@ for amount in amount_paths:
             absolute_rel_diff += abs(exact_call - approx_call) / exact_call
             rel_diff += (approx_call - exact_call) / exact_call
 
-
+            max_abs_diff = max(max_abs_diff, absolute_rel_diff)
+            min_rel_diff = min(min_rel_diff, rel_diff)
+            max_rel_diff = max(max_rel_diff, rel_diff)
 
             #getting the variance of the 'call' function
-            variance += get_variance_call(paths, strike_price)
+            # variance += get_variance_call(paths, strike_price)
 
         # values for writing in csv file
         average_time = total_time / number_iterations
         average_rel_diff_abs = absolute_rel_diff / number_iterations
         average_rel_diff = rel_diff / number_iterations
 
-        avg_variance = variance / number_iterations
+        # avg_variance = variance / number_iterations
 
-        temp_result = [time_step, amount, average_time, average_rel_diff_abs, average_rel_diff, avg_variance, maturity,
+        temp_result = [time_step, amount, average_time, average_rel_diff_abs, average_rel_diff, max_abs_diff,
+                       min_rel_diff, max_rel_diff,  maturity,
                        interest_rate, volatitlity, exact_call]
         with open(file_name, 'a', newline='') as fd:
             writer = csv.writer(fd)
