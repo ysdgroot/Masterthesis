@@ -7,15 +7,14 @@ import numpy as np
 
 # Testing paths
 time_steps_per_maturities = [i for i in range(100, 1001, 100)]
-amount_paths = [i for i in range(1000, 10001, 1000)]
-add_header = True
-write_comment_info = True
-
+amount_paths = [i for i in range(15000, 20001, 1000)]
+add_header = False
+write_comment_info = False
 
 # time_steps_per_maturities = [10 + i * 10 for i in range(20)]
 # amount_paths = [100 + i * 100 for i in range(15)]
-file_name = 'Test - steps and paths accuracy -v4.csv'
-maturity = 5
+file_name = 'Test-steps and accuracy-BS-v1.csv'
+maturity = 10
 interest_rate = 0.001
 volatitlity = 0.1
 start_price = 100
