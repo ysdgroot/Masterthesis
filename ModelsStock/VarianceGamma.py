@@ -1,6 +1,7 @@
 from ModelsStock.GeneralStockModel import StockModel
 import numpy as np
 
+
 class VarianceGamma(StockModel):
 
     # TODO: geef andere namen aan theta, sigma en nu, om een beter beeld te geven wat die betekenen.
@@ -51,11 +52,13 @@ class VarianceGamma(StockModel):
         omega = np.log(1 - self.theta * self.nu - self.nu * self.sigma ** 2 / 2) / self.nu
 
         # the process based on the variance gamma model, each increment or decrement for each time_step
-        # variance_process = self.variance_process(amount, time_step_per_maturity=time_step_per_maturity,
+        # variance_process = self.variance_process(amount,
+        #                                          time_step_per_maturity=time_step_per_maturity,
         #                                          maturity=maturity, seed=seed)
 
-        # TODO: test of deze methode sneller is dan de andere
-        variance_process = self.variance_process_brownian_motion(amount_paths, time_step_per_maturity=time_step_per_maturity,
+        # This test is faster than the 'variance_process' function.
+        variance_process = self.variance_process_brownian_motion(amount_paths,
+                                                                 time_step_per_maturity=time_step_per_maturity,
                                                                  maturity=maturity)
 
         # Start with the 0 on position 0 (so S_t=0 = S0)
@@ -63,7 +66,7 @@ class VarianceGamma(StockModel):
                                                              (self.interest_rate + omega) * dt)))
 
         # The stock price on time t, based on the variance gamma
-        total_exponent = np.add(variance_process.transpose(), constant_rate_stock)
+        total_exponent = np.add(variance_process, constant_rate_stock)
 
         # Adding 0 in the first column, so the first column (first value of the paths) will be the start price
         first_column = np.zeros((amount_paths, 1))
@@ -87,10 +90,9 @@ class VarianceGamma(StockModel):
                                         but more time consuming
         :return: 2d numpy.array, with the Variance Gamma process.
                 shape:
-                        (maturity * time_step_per_maturity, amount)
+                        (amount, maturity * time_step_per_maturity)
         """
         # TODO: Geef referentie van document van waar het op gebaseerd is.
-        # TODO: verander volgorde van de shape return, het is niet logisch dat het deze keer omgekeerd is
 
         number_of_steps = maturity * time_step_per_maturity
         size_increments = 1 / time_step_per_maturity
@@ -101,7 +103,7 @@ class VarianceGamma(StockModel):
         gamma_process_plus = np.random.gamma(size_increments / self.nu, self.nu * mu_plus, (number_of_steps, amount_paths))
         gamma_process_min = np.random.gamma(size_increments / self.nu, self.nu * mu_min, (number_of_steps, amount_paths))
 
-        return np.cumsum(gamma_process_plus - gamma_process_min, axis=0)
+        return np.cumsum(gamma_process_plus - gamma_process_min, axis=0).transpose()
 
     def variance_process_brownian_motion(self, amount_paths, maturity=1, time_step_per_maturity=100):
         """
@@ -120,9 +122,8 @@ class VarianceGamma(StockModel):
                                         but more time consuming
         :return: 2d numpy.array, with the Variance Gamma process.
                 shape:
-                        (maturity * time_step_per_maturity, amount)
+                        (amount, maturity * time_step_per_maturity)
         """
-        # TODO: verander volgorde van de shape return, het is niet logisch dat het deze keer omgekeerd is
 
         number_of_steps = maturity * time_step_per_maturity
         size_increments = 1 / time_step_per_maturity
@@ -130,12 +131,9 @@ class VarianceGamma(StockModel):
         gamma_process = np.random.gamma(size_increments/self.nu, self.nu, (number_of_steps, amount_paths))
         brownian_motion = np.random.randn(number_of_steps, amount_paths)
 
-        return np.cumsum(self.theta * gamma_process + self.sigma * np.sqrt(gamma_process) * brownian_motion, axis=0)
+        return np.cumsum(self.theta * gamma_process + self.sigma * np.sqrt(gamma_process) * brownian_motion,
+                         axis=0).transpose()
 
-    # self.interest_rate = interest_rate
-    # self.theta = theta
-    # self.sigma = sigma
-    # self.nu = nu
     @staticmethod
     def generate_random_variables(amount,
                                   stock_price_bound,
