@@ -79,7 +79,10 @@ class HestonModel(StockModel):
                       np.sqrt(last_vol) * weiner_volatility[i]
 
                 stock_prices.append(stock_prices[-1] + dS)
-                volatilities.append(volatilities[-1] + dnu)
+
+                # todo: bekijk waarom dit soms negatief kan zijn, door afronding? floating points? Feller conditie?
+                toevoeg_vol = max(0, volatilities[-1] + dnu)
+                volatilities.append(toevoeg_vol)
             all_stock_prices.append(stock_prices)
             all_volatilities.append(volatilities)
 
