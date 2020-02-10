@@ -1,6 +1,6 @@
 from OptionModels.Options import OptionStyle
 import numpy as np
-
+import math
 
 class Lookback(OptionStyle):
 
@@ -10,7 +10,7 @@ class Lookback(OptionStyle):
         self.lookback_min = lookback_min
         self.floating_lookback = floating_lookback
 
-    def get_price(self, stock_paths, option_type="C", strike_price=None):
+    def get_price(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
         """
             A Floating strike lookback option (see https://www.investopedia.com/terms/l/lookbackoption.asp)
                 is an option where the strike_price depends on the minimum or maximum value of the path.
@@ -24,6 +24,10 @@ class Lookback(OptionStyle):
             :param stock_paths: 2d numpy.array with each row a stock path (price)
                             The columns represents the price at the time for the stock.
                             First column is the same value, which is the start_price. (There is no check for this)
+            :param maturity: The time of maturity of the option.
+                        Necessary for the price under the risk natural measure.
+            :param interest_rate: The interest_rate per value of maturity.
+                        Necessary for the price under the risk natural measure.
             :param option_type: 'C' for a call option (default value)
                             'P' for a put option
             :param strike_price: a positive value or None. (default=None)
@@ -32,7 +36,7 @@ class Lookback(OptionStyle):
 
             :return: A positive value, which represents the price of the option.
             """
-        # TODO: schrijven van documentaaar (niet vergeten floating vs fixed lookback)
+        # TODO: schrijven van documentie (niet vergeten floating vs fixed lookback)
 
         # if the lookback option uses the min or max
         values = np.min(stock_paths, axis=1) if self.lookback_min else np.max(stock_paths, axis=1)
@@ -53,5 +57,5 @@ class Lookback(OptionStyle):
         else:
             raise ValueError("Invalid option_type")
 
-        return np.mean(option_function(prices_stock, strike_prices))
-
+        # the price under the risk natural measure
+        return math.e ** (-maturity * interest_rate) * np.mean(option_function(prices_stock, strike_prices))

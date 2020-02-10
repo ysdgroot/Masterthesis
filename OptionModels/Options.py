@@ -79,7 +79,7 @@ class OptionStyle(ABC):
     #     return self.get_price(simulations, option_type=option_type, strike_price=strike_price)
 
     @abstractmethod
-    def get_price(self, stock_paths, option_type="C", strike_price=None):
+    def get_price(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
         """
         A method necessary for this class, to price the option based on the given paths.
 
@@ -89,6 +89,10 @@ class OptionStyle(ABC):
         :param stock_paths: 2d numpy.array with each row a stock path (price)
                             The columns represents the price at the time for the stock.
                             First column is the same value, which is the start_price. (There is no check for this)
+        :param maturity: The time of maturity of the option.
+                        Necessary for the price under the risk natural measure.
+        :param interest_rate: The interest_rate per value of maturity.
+                        Necessary for the price under the risk natural measure.
         :param option_type: 'C' for a call option (default value)
                             'P' for a put option
         :param strike_price: a positive number or None. (default=None)

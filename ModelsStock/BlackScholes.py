@@ -1,6 +1,7 @@
 from scipy.stats import norm
 import numpy as np
 from ModelsStock.GeneralStockModel import StockModel
+import matplotlib.pyplot as plt
 
 
 class BlackScholes(StockModel):
@@ -15,7 +16,7 @@ class BlackScholes(StockModel):
         self.interest_rate = interest_rate
         self.volatility = volatility
 
-    def get_stock_prices(self, amount_paths, start_price, maturity, time_step_per_maturity=100, seed=42):
+    def get_stock_prices(self, amount_paths, start_price, maturity, steps_per_maturity=100, seed=42):
         """
         Simulations of stock prices based on the Black Scholes model,
         this means the stock prices follows the Geometric Brownian Motion.
@@ -27,11 +28,12 @@ class BlackScholes(StockModel):
         :param maturity: Positive integer.
                         The total time period for the simulation.
                         The period of one payment of the interest_rate should be the same as maturity=1.
-        :param time_step_per_maturity: A positive integer. (default = 100)
+        :param steps_per_maturity: A positive integer. (default = 100)
                                     The amount of small steps taken to represent 1 maturity passing.
                                     The higher the number te more accurate it represents the stock,
                                         but more time consuming
-        :param seed: Positive integer. (default = 42)
+        :param seed: Positive integer or None. (default = None)
+                    If value is different from None, the function np.random.seed(seed) will be called.
                     For replication purposes, to get same 'random' values.
 
         :return: 2d numpy.array of all the generated paths, based on the Black Scholes model.
@@ -40,16 +42,19 @@ class BlackScholes(StockModel):
                 Each row represents a different path, the columns the time.
                 The first column is the start_price.
         """
-        np.random.seed(seed=seed)
+        # set value of seed
+        if seed is not None:
+            np.random.seed(seed=seed)
 
-        number_of_steps = maturity * time_step_per_maturity  # the amount of timesteps needed for the stockprice
-        dt = 1 / time_step_per_maturity     # length for each step, to make it discrete
+        number_of_steps = maturity * steps_per_maturity  # the amount of timesteps needed for the stockprice
+        dt = 1 / steps_per_maturity  # length for each step, to make it discrete
 
         # calculates a path of factors starting from start_price.
         # Each step is normal distributed with mean 0 and variance dt (length of a step)
         weiner_processes = np.cumprod(1 + self.interest_rate * dt +
                                       self.volatility * np.random.normal(0, np.sqrt(dt),
-                                                (amount_paths, number_of_steps)), 1) * start_price
+                                                                         (amount_paths, number_of_steps)),
+                                      1) * start_price
 
         # starting prices, for the first column
         first_column = np.ones((amount_paths, 1)) * start_price
@@ -58,6 +63,7 @@ class BlackScholes(StockModel):
         weiner_processes = np.append(first_column, weiner_processes, axis=1)
 
         return weiner_processes
+
 
     @staticmethod
     def help_function(start_price, strike_price, maturity, interest_rate, volatility):
@@ -150,7 +156,7 @@ class BlackScholes(StockModel):
                                   maturity_bound,
                                   interest_rate_bound,
                                   volatility_bound,
-                                  seed=42):
+                                  seed=None):
         """
         Generation of random values for the Back Scholes model.
 
@@ -170,9 +176,11 @@ class BlackScholes(StockModel):
         :param volatility_bound: float, tuple or list; only the first 2 elements will be used.
                                 Bounds where the values of the volatility will be.
                                 The values will be uniformly selected.
-        :param seed: Positive integer. (default = 42)
+        :param seed: Positive integer or None. (default = None)
+                    If value is different from None, the function np.random.seed(seed) will be called.
                     For replication purposes, to get same 'random' values.
-        :return: dict, with keys: "interest_rate", "volatility", "maturity", "stock_price", "strike_price".
+        :return: dict, with keys: "interest_rate", "volatility", "maturity", "stock_price", "strike_price",
+                                "strike_price_percent".
                 For each key the values are a np.array of length 'amount' with the random values.
         """
 
@@ -194,7 +202,8 @@ class BlackScholes(StockModel):
             return bounds
 
         # set seed
-        np.random.seed(seed=seed)
+        if seed is not None:
+            np.random.seed(seed=seed)
 
         # conversion to a tuple, in increasing order and controls if the values are positive.
         stock_price_bound = conversion_and_check(stock_price_bound)
@@ -224,7 +233,8 @@ class BlackScholes(StockModel):
                      "volatility": volatilities,
                      "maturity": maturities,
                      "stock_price": stock_prices,
-                     "strike_price": strike_prices}
+                     "strike_price": strike_prices,
+                     "strike_price_percent": strike_prices_percentage}
 
         return data_dict
 

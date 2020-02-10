@@ -1,5 +1,6 @@
 from OptionModels.Options import OptionStyle
 import numpy as np
+import math
 
 
 class PlainVanilla(OptionStyle):
@@ -14,7 +15,7 @@ class PlainVanilla(OptionStyle):
         super(PlainVanilla, self).__init__()
         self.strike_price_in_percent = strike_price_in_percent
 
-    def get_price(self, stock_paths, option_type="C", strike_price=None):
+    def get_price(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
         """
         Calculates the price of a plain vanilla option (standard European option), given all the stock_paths.
 
@@ -24,6 +25,10 @@ class PlainVanilla(OptionStyle):
         :param stock_paths: 2d numpy.array with each row a stock path (price)
                             The columns represents the price at the time for the stock.
                             First column is the same value, which is the start_price. (There is no check for this)
+        :param maturity: The time of maturity of the option.
+                        Necessary for the price under the risk natural measure.
+        :param interest_rate: The interest_rate per value of maturity.
+                        Necessary for the price under the risk natural measure.
         :param option_type: 'C' for a call option (default value)
                             'P' for a put option
         :param strike_price: a positive number or None. (default=None)
@@ -53,4 +58,5 @@ class PlainVanilla(OptionStyle):
         # Gets the last value of the stock, for European vanilla option (the last column)
         stock_prices = stock_paths[:, -1]
 
-        return np.mean(option_function(stock_prices, strike_price))
+        # the price under the risk natural measure
+        return math.e ** (-maturity * interest_rate) * np.mean(option_function(stock_prices, strike_price))
