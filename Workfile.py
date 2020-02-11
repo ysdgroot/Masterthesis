@@ -9,6 +9,7 @@ from OptionModels.EuropeanLookback import Lookback
 #
 import numpy as np
 from OptionModels.PlainVanilla import PlainVanilla
+from OptionModels.EuropeanAsian import AsianMean
 import timeit
 import time
 import pandas as pd
@@ -16,39 +17,9 @@ from sklearn.ensemble import RandomForestRegressor
 import math
 from sklearn.metrics import mean_squared_error
 
-# ,,1.2484183531271091,,,57,C,276.50262638851757,184.71873542991236,301.4290227542398,0.0,66.95938980721127
-# ,,1.581081399081321,,,29,C,92.87446790077998,75.02217462063409,152.125760199382,0.0,45.78125046985539
-
-n_paths_optionpricing = 20000
-
-start_price = 106.84148874797158
-maturity = 29
-strike_price = 168.92509050957412
-
-interest_rate = 0.02598403392435606
-vol = 0.156289493047819
-# resultaat = 276.50262638851757
-# theoretisch = 66.95938980721127
-
-
-options = [PlainVanilla(False)]
-
-bs = BlackScholes(interest_rate, vol)
-
-for i in range(1):
-    dict_option_values = bs.get_price_simulations(options,
-                                                  n_paths_optionpricing,
-                                                  start_price,
-                                                  maturity,
-                                                  interest_rate,
-                                                  strike_price=strike_price,
-                                                  option_type='C',
-                                                  steps_per_maturity=100,
-                                                  seed=None)
-
-    print(dict_option_values)
-
-print(BlackScholes.solution_call_option(start_price, strike_price, maturity, interest_rate, vol))
+option = AsianMean(2)
+stock_paths = np.array([[1, 2, 2, 1, 3, 2, 4, 5], [0, 1, 1, 0, 1, 2, 1, 0]])
+option.get_price(stock_paths, 4, 0.1)
 
 # data = BS.get_random_data_and_solutions('C', 10000, [80, 120], [0.01, 0.03], [0.01, 0.2], [0.25, 5], [70, 130])
 # print('End new data')

@@ -18,6 +18,7 @@ class StockModel(ABC):
                               steps_per_maturity=100,
                               seed=None):
         """
+        The stock_paths will be generated of the object on which this method is called.
 
         :param option_styles: A list of class OptionStyle.
         :param amount_paths: Positive integer.

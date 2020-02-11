@@ -19,7 +19,7 @@ class VarianceGamma(StockModel):
         self.sigma = sigma
         self.nu = nu
 
-    def get_stock_prices(self, amount_paths, start_price, maturity, time_step_per_maturity=100, seed=42):
+    def get_stock_prices(self, amount_paths, start_price, maturity, time_step_per_maturity=100, seed=None):
         """
         Simulations of stock prices based on the Variance Gamma model.
 
@@ -34,7 +34,7 @@ class VarianceGamma(StockModel):
                                     The amount of small steps taken to represent 1 maturity passing.
                                     The higher the number te more accurate it represents the stock,
                                         but more time consuming
-        :param seed: Positive integer. (default = 42)
+        :param seed: Positive integer. (default = None)
                     For replication purposes, to get same 'random' values.
         :return: 2d numpy.array of all the generated paths, based on Variance Gamma model.
                 shape:
@@ -42,8 +42,8 @@ class VarianceGamma(StockModel):
                 Each row represents a different path, the columns the time.
                 The first column is the start_price.
         """
-
-        np.random.seed(seed=seed)
+        if seed is not None:
+            np.random.seed(seed=seed)
 
         number_of_evaluations = time_step_per_maturity * maturity
         dt = 1 / time_step_per_maturity

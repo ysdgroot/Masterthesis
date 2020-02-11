@@ -16,7 +16,7 @@ class BlackScholes(StockModel):
         self.interest_rate = interest_rate
         self.volatility = volatility
 
-    def get_stock_prices(self, amount_paths, start_price, maturity, steps_per_maturity=100, seed=42):
+    def get_stock_prices(self, amount_paths, start_price, maturity, steps_per_maturity=100, seed=None):
         """
         Simulations of stock prices based on the Black Scholes model,
         this means the stock prices follows the Geometric Brownian Motion.
@@ -70,17 +70,16 @@ class BlackScholes(StockModel):
         Help function for the Black Scholes formula. Calculation of an important part of the formula.
         Return d_plus,d_min mostly used in the literature.
 
-        # todo: info dat het ook een np.array mag zijn, met ieder dezelfde lengte
-        :param maturity: Positive integer.
+        :param maturity: Positive integer or np.array with same length as any other parameters.
                         The time that the option matures.
                         The period of one payment of the interest_rate should be the same as maturity=1.
-        :param start_price: Positive float.
+        :param start_price: Positive float or np.array with same length as any other parameters.
                             Is the starting price of the stock.
-        :param strike_price: Positive float.
+        :param strike_price: Positive float or np.array with same length as any other parameters.
                             The price for the stock when the option is exercised.
-        :param interest_rate: Positive float.
+        :param interest_rate: Positive float or np.array with same length as any other parameters.
                             The risk-free interest rate, per time maturity.
-        :param volatility: Positive float.
+        :param volatility: Positive float or np.array with same length as any other parameters.
                             The volatility of the stock, per time maturity.
         :return: 2 values, d_plus and d_min.
             start_price = S
@@ -104,19 +103,18 @@ class BlackScholes(StockModel):
             The Stock price is the Geometric Brownian Motion
             This assumes the interest rate and volatility are constant during the time of maturity.
 
-            # todo: info dat het ook een np.array mag zijn, met ieder dezelfde lengte
-            :param maturity: Positive integer.
+            :param maturity: Positive integer or np.array with same length as any other parameters.
                         The time that the option matures.
                         The period of one payment of the interest_rate should be the same as maturity=1.
-            :param start_price: Positive float.
+            :param start_price: Positive float or np.array with same length as any other parameters.
                             Is the starting price of the stock.
-            :param strike_price: Positive float.
+            :param strike_price: Positive float or np.array with same length as any other parameters.
                                 The price for the stock when the option is exercised.
-            :param interest_rate: Positive float.
+            :param interest_rate: Positive float or np.array with same length as any other parameters.
                                 The risk-free interest rate, per time maturity.
-            :param volatility: Positive float.
+            :param volatility: Positive float or np.array with same length as any other parameters.
                                 The volatility of the stock, per time maturity.
-            :return: Positive float.
+            :return: Positive float or np.array of the same length as the input
                     Price of a call-option based on the BS model
             """
         d_plus, d_min = BlackScholes.help_function(start_price, strike_price, maturity, interest_rate, volatility)
@@ -130,18 +128,18 @@ class BlackScholes(StockModel):
             The Stock price is the Geometric Brownian Motion
             This assumes the interest rate and volatility are constant during the time of maturity.
 
-            :param maturity: Positive integer.
+            :param maturity: Positive integer or np.array with same length as any other parameters.
                         The time that the option matures.
                         The period of one payment of the interest_rate should be the same as maturity=1.
-            :param start_price: Positive float.
+            :param start_price: Positive float or np.array with same length as any other parameters.
                             Is the starting price of the stock.
-            :param strike_price: Positive float.
+            :param strike_price: Positive float or np.array with same length as any other parameters.
                                 The price for the stock when the option is exercised.
-            :param interest_rate: Positive float.
+            :param interest_rate: Positive float or np.array with same length as any other parameters.
                                 The risk-free interest rate, per time maturity.
-            :param volatility: Positive float.
+            :param volatility: Positive float or np.array with same length as any other parameters.
                                 The volatility of the stock, per time maturity.
-            :return: Positive float.
+            :return: Positive float or np.array of the same length as the input
                     Price of a put-option based on the BS model.
             """
         d_plus, d_min = BlackScholes.help_function(start_price, strike_price, maturity, interest_rate, volatility)
@@ -156,6 +154,7 @@ class BlackScholes(StockModel):
                                   interest_rate_bound,
                                   volatility_bound,
                                   seed=None):
+        # todo: het schrijven zodat het mogelijk is om een percentage van de forward price te nemen
         """
         Generation of random values for the Back Scholes model.
 
