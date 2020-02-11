@@ -11,7 +11,7 @@ time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 amount_paths = [i for i in range(1000, 20001, 1000)]
 write_comment_info_and_header = True
 
-file_name = 'ParallelTest-steps and accuracy-VG-v1.csv'
+file_name = 'Test-steps and accuracy-VG-v1.csv'
 maturity = 10
 interest_rate = 0.001
 sigma = 0.25
@@ -38,31 +38,34 @@ if write_comment_info_and_header:
         fd.write("# Start_price = {} \n".format(start_price))
         fd.write("# Strike_price = {} \n".format(strike_price))
         fd.write("# Option = Plainvanilla \n")
-        fd.write("Number of iterations = {}".format(number_iterations))
+        fd.write("# Number of iterations = {} \n".format(number_iterations))
 
         # write the header
         csv.writer(fd).writerow(col_names)
 
 
-def func_per_time_step(time_step):
-    print("Amount {}, timestep = {} ".format(amount, time_step))
+def func_per_time_step(time_step, amount_paths):
+    print("Amount {}, timestep = {} ".format(amount_paths, time_step))
 
     for i in range(number_iterations):
         start = time.perf_counter()
-        paths = VG.get_stock_prices(amount, start_price, maturity, time_step_per_maturity=time_step, seed=42 + i)
+        paths = VG.get_stock_prices(amount_paths, start_price, maturity, time_step_per_maturity=time_step, seed=42 + i)
         end = time.perf_counter()
         # total_time += end - start
         total_time = end - start
 
-        approx_call = option.get_price(paths, strike_price=strike_price)
+        approx_call = option.get_price(paths, maturity, interest_rate, strike_price=strike_price)
 
         variance = np.var(paths[:, -1])
 
-        temp_result = [time_step, amount, total_time, approx_call, variance]
+        temp_result = [time_step, amount_paths, total_time, approx_call, variance]
         with open(file_name, 'a', newline='') as fd:
-            writer = csv.writer(fd)
-            writer.writerow(temp_result)
+            csv.writer(fd).writerow(temp_result)
 
 
-for amount in amount_paths:
-    Parallel(n_jobs=3)(delayed(func_per_time_step)(time_step) for time_step in time_steps_per_maturities)
+def iteration_func(amount):
+    for time_step in time_steps_per_maturities:
+        func_per_time_step(time_step, amount)
+
+
+Parallel(n_jobs=4)(delayed(iteration_func)(amount) for amount in amount_paths)

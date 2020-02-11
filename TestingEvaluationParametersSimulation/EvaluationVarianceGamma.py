@@ -11,7 +11,7 @@ def read_data(filename):
     return data
 
 
-filename = 'ParallelTest-steps and accuracy-VG-v1.csv'
+filename = 'Test-steps and accuracy-VG-v1.csv'
 data = read_data(filename)
 
 number_paths = data['paths'].unique()

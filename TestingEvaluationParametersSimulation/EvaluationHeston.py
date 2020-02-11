@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import csv
 import math
-from sklearn.linear_model import LinearRegression
+
+
+# todo: Verbeter deze code om het algemeen alle methoden nog een uit te voeren
 
 
 def read_data(filename):
@@ -11,7 +13,7 @@ def read_data(filename):
     return data
 
 
-filename = 'ParallelTest-steps and accuracy-Heston-v1.csv'
+filename = 'Test-steps and accuracy-H-v1.csv'
 data = read_data(filename)
 
 number_paths = data['paths'].unique()

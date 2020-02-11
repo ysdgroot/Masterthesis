@@ -10,7 +10,7 @@ amount_paths = [i for i in range(1000, 20001, 1000)]
 add_header = True
 write_comment_info = True
 
-file_name = 'ParallelTest-steps and accuracy-BS-v1.csv'
+file_name = 'Test-steps and accuracy-BS-v1.csv'
 maturity = 10
 interest_rate = 0.001
 volatitlity = 0.1

@@ -11,7 +11,7 @@ def read_data(filename):
     return data
 
 
-filename = 'ParallelTest-steps and accuracy-BS-v3.csv'
+filename = 'Test-steps and accuracy-BS-v3.csv'
 data = read_data(filename)
 
 for i in range(1000, 20001, 1000):
