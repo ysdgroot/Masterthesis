@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 class StockModel(ABC):
 
     @abstractmethod
-    def get_stock_prices(self, amount, start_price, maturity, steps_per_maturity=100, seed=42):
+    def get_stock_prices(self, amount, start_price, maturity, steps_per_maturity=100, seed=None):
         pass
 
     def get_price_simulations(self,
