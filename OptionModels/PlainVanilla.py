@@ -36,7 +36,7 @@ class PlainVanilla(OptionStyle):
                             If strike_price_in_percent = True
                                 the (real) strike_price will the strike_price * start_price
 
-        :return: A positive value, which represents the price of the option.
+        :return: A positive value, which represents the price of the option at the moment (risk natural measure)
         """
         # This check need to be before 'Strike_price=None', otherwise there can be bugs when giving 'strike_price=None'
         # and 'strike_price_in_percent=True'
@@ -48,11 +48,8 @@ class PlainVanilla(OptionStyle):
             strike_price = stock_paths[0, 0]
 
         # check if the option_type is correct
-        if option_type in self.optiontype_dict.keys():
-            # Get the function of the put or call option
-            # option_function = self.get_dict()[option_type]
-            option_function = self.optiontype_dict[option_type]
-        else:
+        option_function = self.optiontype_dict.get(option_type)
+        if option_function is None:
             raise ValueError("Invalid option_type")
 
         # Gets the last value of the stock, for European vanilla option (the last column)

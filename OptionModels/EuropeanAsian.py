@@ -5,18 +5,19 @@ import math
 
 class AsianMean(OptionStyle):
 
-    # todo: verwijderen van dit algemeen geval, te weinig tijd om dit effectief te doen.
-    def __init__(self, period_mean=None, steps_per_maturity=100):
-        # todo: documentatie
-        super(AsianMean, self).__init__()
-        self.period_mean = period_mean
-        self.time_step_per_maturity = steps_per_maturity
+    def __init__(self, period_mean=None):
+        """
+        Object to represent the Asian option of European style.
 
-        # search the number of columns back in the matrix of stock_paths
-        if period_mean is None:
-            self.steps_back = None
-        else:
-            self.steps_back = period_mean * steps_per_maturity
+        For Asian options the strike price is based on the mean value of the stock.
+        Period_mean is to define the amount of periods the strike price is based on.
+        :param period_mean: an positive integer,
+            For the amount of periods it needs to go back to calculate the strike price of this option.
+        """
+        super(AsianMean, self).__init__()
+        if type(period_mean) is not int or period_mean < 0:
+            raise TypeError("Invalid type given, must be a positive integer")
+        self.period_mean = period_mean
 
     def get_price(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
         """
@@ -41,20 +42,22 @@ class AsianMean(OptionStyle):
 
         :return: A positive value, which represents the price of the option.
         """
-        #todo: extra controles en functionaliteit met steps back (+ controle matrix groot genoeg)
 
-        # The strike_prices by the mean of all the paths
-        strike_prices = np.mean(stock_paths, axis=1)
+        if self.period_mean is not None:
+            # todo: controleer of the time_steps_per_maturity wel correct worden behandeld, want het is mogelijk dat het altijd +1 heeft staan (mss wordt deze wel weggedeeld)
+            time_steps_per_maturity = stock_paths.shape[1] // maturity
+            position_steps_back = stock_paths.shape[1] - time_steps_per_maturity * min(self.period_mean, maturity)
+            strike_prices = np.mean(stock_paths[:, position_steps_back:], axis=1)
+        else:
+            # The strike_prices by the mean of all the paths
+            strike_prices = np.mean(stock_paths, axis=1)
 
         # The values of each stock
         prices_stock = stock_paths[:, -1]
 
         # check if the option_type is correct
-        if option_type in self.optiontype_dict.keys():
-            # Get the function of the put or call option
-            # option_function = self.get_dict()[option_type]
-            option_function = self.optiontype_dict[option_type]
-        else:
+        option_function = self.optiontype_dict.get(option_type)
+        if option_function is None:
             raise ValueError("Invalid option_type")
 
         # the price under the risk natural measure

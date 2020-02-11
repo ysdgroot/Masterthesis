@@ -44,40 +44,6 @@ class OptionStyle(ABC):
         """
         return dict({"C": self.call, "P": self.put})
 
-    #
-    # def get_price_simulation(self, stock_model, amount_paths, start_price, maturity, strike_price=None,
-    #                              option_type="C", time_step_per_maturity=100, seed=42):
-    #     """
-    #     Get the price of the option based on a stock_model, which simulates amount_paths different paths for the stock.
-    #     The simulation starts with the start_price and maturity.
-    #     Because this is a simulation, the path makes some fixed small steps,
-    #         which can be altered by time_step_per_maturity. The bigger this number the better it will approximate
-    #         the theoretical value.
-    #     The price of the option is also based on the strike_price, default=None because some options are path-dependent,
-    #         which means the strike_price depends on previous values of the stock.
-    #     The call option will be set as a default (option_type), 'P' is for the put option.
-    #     For random generations, the seed is set to 113, which has no meaning.
-    #     For additional values for the simulation of the option, this can also be given.
-    #
-    #     :param stock_model: object of type 'StockModel', for the simulation of the stock.
-    #     :param amount_paths: the amount (positive integer) of paths that need to be generated for the simulation.
-    #     :param start_price: a number that represents the startprice of the stock
-    #     :param maturity: a positive value which represents the time left of the option.
-    #     :param strike_price: (default=None) if the strike_price is path dependent. Else (not-path-dependent)
-    #         a value.
-    #     :param option_type: (default='C') 'C' for a call option and 'P' for a put option.
-    #     :param time_step_per_maturity: (default=100) a positive value.
-    #     :param seed: (default=42) to redo the simulation if necessary
-    #     :return: a value which represents the value of the option based on the simulations.
-    #     """
-    #
-    #     # Get all the simulations/stockpaths based on the given StockModel
-    #     simulations = stock_model.get_stock_prices(amount_paths, start_price, maturity,
-    #                                                time_step_per_maturity=time_step_per_maturity, seed=seed)
-    #
-    #
-    #     return self.get_price(simulations, option_type=option_type, strike_price=strike_price)
-
     @abstractmethod
     def get_price(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
         """

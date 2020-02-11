@@ -64,7 +64,6 @@ class BlackScholes(StockModel):
 
         return weiner_processes
 
-
     @staticmethod
     def help_function(start_price, strike_price, maturity, interest_rate, volatility):
         """
