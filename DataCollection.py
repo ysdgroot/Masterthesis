@@ -15,7 +15,7 @@ n_datapoints = 50000
 steps_per_maturity = 400
 n_paths_optionpricing = 20000
 
-dict_general_info = {'n_datapoints (per call) ': n_datapoints,
+dict_general_info = {'n_datapoints (per type) ': n_datapoints,
                      'steps/maturity': steps_per_maturity,
                      'n_paths/option': n_paths_optionpricing}
 
@@ -96,6 +96,7 @@ if make_BS_data:
     strike_prices_precentages = random_values["strike_price_percent"]
 
 
+    # for parallelization
     def calculate_save_price(i):
         print("Datapoint {}".format(i))
 

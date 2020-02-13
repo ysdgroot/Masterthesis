@@ -15,14 +15,15 @@ class AsianMean(OptionStyle):
             For the amount of periods it needs to go back to calculate the strike price of this option.
         """
         super(AsianMean, self).__init__()
-        if type(period_mean) is not int or period_mean < 0:
+        if period_mean is not None and (type(period_mean) is not int or period_mean < 0):
             raise TypeError("Invalid type given, must be a positive integer")
         self.period_mean = period_mean
 
     def get_price(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
         """
         Calculates the price of a European option with Asian pricing, given all the stock_paths.
-        The strike_price is calculated as the mean of the stock (stock_path).
+        The strike_price is calculated as the mean of the stock (stock_paths),
+                with the assumption that the first column is the starting price of the stock (all the same)
         Therefor the strike_price is path-dependent.
 
         This function is for simulations, to approximate the optimal option price.
@@ -44,7 +45,10 @@ class AsianMean(OptionStyle):
         """
 
         if self.period_mean is not None:
-            # todo: controleer of the time_steps_per_maturity wel correct worden behandeld, want het is mogelijk dat het altijd +1 heeft staan (mss wordt deze wel weggedeeld)
+            # Works correctly.
+            # But if you want the price 'at exactly' the time before period_mean you need
+            #                                                               to substract -1 at position_steps_back.
+            # unless the first column is not the starting price.
             time_steps_per_maturity = stock_paths.shape[1] // maturity
             position_steps_back = stock_paths.shape[1] - time_steps_per_maturity * min(self.period_mean, maturity)
             strike_prices = np.mean(stock_paths[:, position_steps_back:], axis=1)

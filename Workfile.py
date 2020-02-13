@@ -17,9 +17,10 @@ from sklearn.ensemble import RandomForestRegressor
 import math
 from sklearn.metrics import mean_squared_error
 
-option = AsianMean(2)
-stock_paths = np.array([[1, 2, 2, 1, 3, 2, 4, 5], [0, 1, 1, 0, 1, 2, 1, 0]])
-option.get_price(stock_paths, 4, 0.1)
+option = AsianMean(1)
+# stock_paths = np.array([[1, 2, 2, 1, 3, 2, 4, 5], [0, 1, 1, 0, 1, 2, 1, 0]])
+stock_paths = BlackScholes(0.01, 0.1).get_stock_prices(100, 100, 2, steps_per_maturity=4)
+print(option.get_price(stock_paths, 2, 0.1))
 
 # data = BS.get_random_data_and_solutions('C', 10000, [80, 120], [0.01, 0.03], [0.01, 0.2], [0.25, 5], [70, 130])
 # print('End new data')
