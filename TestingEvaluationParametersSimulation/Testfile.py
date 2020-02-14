@@ -11,14 +11,32 @@ def read_data(filename):
     return data
 
 
-filename = 'Test-steps and accuracy-BS-v3.csv'
-data = read_data(filename)
+# filename = 'Test-steps and accuracy-BS-v3-Lookback.csv'
+# filename = 'Test-steps and accuracy-BS-v2-Asian.csv'
+# n_iterations = 50
+filename = 'Test-steps and accuracy-BS-v1.csv'
+n_iterations = 20
 
-for i in range(1000, 20001, 1000):
-    print(len(data[data["paths"] == i]))
+data = read_data(filename)
 
 number_paths = data['paths'].unique()
 step_sizes = data['time_step'].unique()
+
+print("Shape {}".format(data.shape))
+
+# for i in number_paths:
+#     print("Paths {} : {}".format(i, len(data[data["paths"] == i])))
+#
+# for j in step_sizes:
+#     print("Step size {} : {}".format(j, len(data[data["time_step"] == j])))
+
+
+for step in step_sizes:
+    for path in number_paths:
+        length_datapoints = len(data[(data["paths"] == path) & (data["time_step"] == step)])
+        if length_datapoints != n_iterations:
+            amount = n_iterations - length_datapoints
+            print("Amount = {}; Step {}, path {}".format(amount, step, path))
 
 
 def plot_accuracy_graph(values, accuracy_type, x_name, title, name_x_axis, name_y_axis,

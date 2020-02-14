@@ -7,13 +7,16 @@ import csv
 from joblib import Parallel, delayed
 import numpy as np
 
+# todo: probeer het probleem van het niet kunnen uitschrijven van de data in de file te vermijden.
+#           zorgt voor een verlies van toch een aantal datapunten, vooral de kleine snelle methoden.
+
 # Testing paths
 time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 amount_paths = [i for i in range(1000, 20001, 1000)]
 add_header = True
 write_comment_info = True
 
-file_name = 'Test-steps and accuracy-BS-v2-Asian.csv'
+file_name = 'Test-steps and accuracy-BS-v3-Lookback.csv'
 maturity = 10
 interest_rate = 0.001
 volatitlity = 0.1
@@ -27,11 +30,11 @@ BS = BlackScholes(interest_rate, volatitlity)
 # option_name = "Plain vanilla"
 is_plain_vanilla = False
 
-option = AsianMean()  # Asian option
-option_name = "Asian mean"
+# option = AsianMean()  # Asian option
+# option_name = "Asian mean"
 
-# option = Lookback(lookback_min=True)
-# option_name = "Lookback_min"
+option = Lookback(lookback_min=True)
+option_name = "Lookback_min"
 
 if is_plain_vanilla:
     exact_call = BlackScholes.solution_call_option(start_price, strike_price, maturity, interest_rate, volatitlity)
