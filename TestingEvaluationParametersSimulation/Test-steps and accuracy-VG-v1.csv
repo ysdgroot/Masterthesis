@@ -1,4 +1,5 @@
-Variance Gamma model# Maturity = 10 
+# Variance Gamma model
+# Maturity = 10
 # Interest_rate = 0.001 
 # Theta = -0.2 
 # Nu = 0.75 

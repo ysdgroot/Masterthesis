@@ -4,9 +4,10 @@ from OptionModels.EuropeanAsian import AsianMean
 from OptionModels.EuropeanLookback import Lookback
 import time
 import csv
-import math
 import numpy as np
 from joblib import Parallel, delayed
+
+# TODO: verander de methoden, ze zijn allemaal afhankelijk van voorgaande parameterwaarden (global objects)
 
 # Testing paths
 time_steps_per_maturities = [i for i in range(100, 1001, 100)]
@@ -15,7 +16,7 @@ amount_paths = [i for i in range(1000, 20001, 1000)]
 # time_steps_per_maturities = [i for i in range(100, 201, 100)]
 # amount_paths = [i for i in range(1000, 2001, 1000)]
 
-write_head_to_file = [False, True, True]
+write_header_to_files = [False, True, True]
 do_tests = [False, True, True]
 
 number_iterations = 50
@@ -27,7 +28,7 @@ file_name3 = 'Test-steps and accuracy-VG-v3-Lookback.csv'
 
 file_names = [file_name, file_name2, file_name3]
 
-# Parameters for the Variance Gamma model and Stock model
+# The different file_name to write through
 maturity = 10
 interest_rate = 0.001
 sigma = 0.25
@@ -41,8 +42,8 @@ VG = VarianceGamma(interest_rate, theta, sigma, nu)
 
 # The different options types
 option = PlainVanilla()
-option2 = Lookback()
-option3 = AsianMean()
+option2 = AsianMean()
+option3 = Lookback()
 
 options = [option, option2, option3]
 option_names = ["Plainvanilla", "Asian", "Lookback"]
@@ -67,7 +68,7 @@ def write_comment_info_and_header(file_n, option_name):
         csv.writer(fd).writerow(col_names)
 
 
-for bool_header, bool_test, file_n, option_n in zip(write_head_to_file, do_tests, file_names, option_names):
+for bool_header, bool_test, file_n, option_n in zip(write_header_to_files, do_tests, file_names, option_names):
     if bool_header and bool_test:
         write_comment_info_and_header(file_n, option_n)
 
