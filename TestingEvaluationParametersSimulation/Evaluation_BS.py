@@ -40,17 +40,24 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
     plt.show()
 
 
+print("Start of the Asian/Lookback functionality")
+# file_n = 'Test-steps and accuracy-BS-v1.csv'
 file_n = 'Test-steps and accuracy-BS-v2-Asian.csv'
+# file_n = 'Test-steps and accuracy-BS-v3-Lookback.csv'
 data = read_data(file_n)
 
+# column name from the csv file as the X-variable
 x_name = "paths"
 # x_name = "time_step"
+
+# column name from de csv file as Y-variable
+y_name = "option_price"
 
 dict_label_name = {"paths": "Number of paths",
                    "time_step": "Amount of steps per maturity"
                    }
 
-plot_change_variance(data, x_name, "option_price", "Variance price Asian option - BS", dict_label_name[x_name],
+plot_change_variance(data, x_name, y_name, "Variance price Asian option - BS", dict_label_name[x_name],
                      "Option price", plot_mean=True, plot_min_max=True)
 
 ########################################################################################################################
