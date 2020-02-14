@@ -1,5 +1,7 @@
 from ModelsStock.VarianceGamma import VarianceGamma
 from OptionModels.PlainVanilla import PlainVanilla
+from OptionModels.EuropeanAsian import AsianMean
+from OptionModels.EuropeanLookback import Lookback
 import time
 import csv
 import math
@@ -9,9 +11,23 @@ from joblib import Parallel, delayed
 # Testing paths
 time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 amount_paths = [i for i in range(1000, 20001, 1000)]
-write_comment_info_and_header = True
+# test paths
+# time_steps_per_maturities = [i for i in range(100, 201, 100)]
+# amount_paths = [i for i in range(1000, 2001, 1000)]
 
+write_head_to_file = [False, True, True]
+do_tests = [False, True, True]
+
+number_iterations = 50
+
+# The different file_name to write through
 file_name = 'Test-steps and accuracy-VG-v1.csv'
+file_name2 = 'Test-steps and accuracy-VG-v2-Asian.csv'
+file_name3 = 'Test-steps and accuracy-VG-v3-Lookback.csv'
+
+file_names = [file_name, file_name2, file_name3]
+
+# Parameters for the Variance Gamma model and Stock model
 maturity = 10
 interest_rate = 0.001
 sigma = 0.25
@@ -20,16 +36,23 @@ theta = -0.2
 start_price = 100
 strike_price = 100
 
-number_iterations = 20
-
+# Construct object of Variance Gamma method
 VG = VarianceGamma(interest_rate, theta, sigma, nu)
-option = PlainVanilla()
 
-if write_comment_info_and_header:
+# The different options types
+option = PlainVanilla()
+option2 = Lookback()
+option3 = AsianMean()
+
+options = [option, option2, option3]
+option_names = ["Plainvanilla", "Asian", "Lookback"]
+
+
+def write_comment_info_and_header(file_n, option_name):
     col_names = ['time_step', 'paths', 'time', 'option_value', 'variance']
 
-    with open(file_name, 'w', newline='') as fd:
-        fd.write("Variance Gamma model")
+    with open(file_n, 'w', newline='') as fd:
+        fd.write("Variance Gamma model \n")
         fd.write('# Maturity = {} \n'.format(maturity))
         fd.write('# Interest_rate = {} \n'.format(interest_rate))
         fd.write("# Theta = {} \n".format(theta))
@@ -37,11 +60,16 @@ if write_comment_info_and_header:
         fd.write("# Sigma = {} \n".format(sigma))
         fd.write("# Start_price = {} \n".format(start_price))
         fd.write("# Strike_price = {} \n".format(strike_price))
-        fd.write("# Option = Plainvanilla \n")
+        fd.write("# Option = {} \n".format(option_name))
         fd.write("# Number of iterations = {} \n".format(number_iterations))
 
         # write the header
         csv.writer(fd).writerow(col_names)
+
+
+for bool_header, bool_test, file_n, option_n in zip(write_head_to_file, do_tests, file_names, option_names):
+    if bool_header and bool_test:
+        write_comment_info_and_header(file_n, option_n)
 
 
 def func_per_time_step(time_step, amount_paths):
@@ -54,13 +82,15 @@ def func_per_time_step(time_step, amount_paths):
         # total_time += end - start
         total_time = end - start
 
-        approx_call = option.get_price(paths, maturity, interest_rate, strike_price=strike_price)
+        for boolean_test, name_file, opt in zip(do_tests, file_names, options):
+            if boolean_test:
+                approx_call = opt.get_price(paths, maturity, interest_rate, strike_price=strike_price)
 
-        variance = np.var(paths[:, -1])
+                variance = np.var(paths[:, -1])
 
-        temp_result = [time_step, amount_paths, total_time, approx_call, variance]
-        with open(file_name, 'a', newline='') as fd:
-            csv.writer(fd).writerow(temp_result)
+                temp_result = [time_step, amount_paths, total_time, approx_call, variance]
+                with open(name_file, 'a', newline='') as fd:
+                    csv.writer(fd).writerow(temp_result)
 
 
 def iteration_func(amount):
