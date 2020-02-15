@@ -16,8 +16,11 @@ amount_paths = [i for i in range(1000, 20001, 1000)]
 # time_steps_per_maturities = [i for i in range(100, 201, 100)]
 # amount_paths = [i for i in range(1000, 2001, 1000)]
 
-write_header_to_files = [False, True, True]
-do_tests = [False, True, True]
+write_header_to_files = [True, True, True]
+
+# if the tests needs to be done, in order 'Standard, Asian, Lookback'
+do_tests = [False, False, False]
+# do_tests = [True, True, True]
 
 number_iterations = 50
 
@@ -48,6 +51,8 @@ option3 = Lookback()
 options = [option, option2, option3]
 option_names = ["Plainvanilla", "Asian", "Lookback"]
 
+
+########################################################################################################################
 
 def write_comment_info_and_header(file_n, option_name):
     col_names = ['time_step', 'paths', 'time', 'option_value', 'variance']
