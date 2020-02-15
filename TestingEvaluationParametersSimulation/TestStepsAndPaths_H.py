@@ -15,6 +15,7 @@ from joblib import Parallel, delayed
 # amount_paths = [i for i in range(1000, 20001, 1000)]
 
 # TODO: controleer snelheid van Heston model, zodat alle waarden ook bepaald kunnen worden
+#      verander ook de methode, want het Euler model om het Heston model kan negatieve waarden verkrijgen, dit moet worden opgelost (zie papers)
 time_steps_per_maturities = [i for i in range(100, 201, 100)]
 amount_paths = [i for i in range(1000, 2001, 1000)]
 
@@ -53,6 +54,8 @@ option_lookback = Lookback()
 options = [option_standard, option_asian, option_lookback]
 option_names = ["Plainvanilla", "Asian", "Lookback"]
 
+
+########################################################################################################################
 
 def write_comment_info_and_header(file_n, option_name):
     col_names = ['time_step', 'paths', 'time', 'option_value', 'variance']
