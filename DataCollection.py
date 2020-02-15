@@ -10,7 +10,7 @@ make_BS_data = True
 make_VG_data = False
 make_heston_data = False
 
-n_datapoints = 50000
+n_datapoints = 10000
 
 steps_per_maturity = 400
 n_paths_optionpricing = 20000
@@ -44,7 +44,7 @@ def write_to_file(filename, list_values):
 # ------------------------------- Black Scholes -----------------------------------------------------------------------#
 ########################################################################################################################
 if make_BS_data:
-    file_name = "Generated Data - BS model - 11_2_20.csv"
+    file_name = "Generated Data - BS model - 15_2_20.csv"
     seed_values = 42
     seed_paths = 73
 
