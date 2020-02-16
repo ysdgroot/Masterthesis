@@ -58,7 +58,7 @@ option_names = ["Plainvanilla", "Asian", "Lookback"]
 ########################################################################################################################
 
 def write_comment_info_and_header(file_n, option_name):
-    col_names = ['time_step', 'paths', 'time', 'option_value', 'variance']
+    col_names = ['time_step', 'paths', 'time', 'option_price', 'variance']
 
     with open(file_n, 'w', newline='') as fd:
         fd.write("# Heston model \n")

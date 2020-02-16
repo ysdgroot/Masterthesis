@@ -1,4 +1,4 @@
-Variance Gamma model 
+# Variance Gamma model
 # Maturity = 10 
 # Interest_rate = 0.001 
 # Theta = -0.2 
@@ -8,7 +8,7 @@ Variance Gamma model
 # Strike_price = 100 
 # Option = Asian
 # Number of iterations = 50 
-time_step,paths,time,option_value,variance
+time_step,paths,time,option_price,variance
 100,1000,0.11575930000000001,19.518162094322335,9663.463069879723
 100,2000,0.22915289999999996,20.586931891375905,10535.021595957716
 100,1000,0.12555900000000003,19.13910217069096,8713.437809034882
