@@ -12,8 +12,8 @@ make_heston_data = False
 
 n_datapoints = 10000
 
-steps_per_maturity = 400
-n_paths_optionpricing = 20000
+steps_per_maturity = 200
+n_paths_optionpricing = 15000
 
 dict_general_info = {'n_datapoints (per type) ': n_datapoints,
                      'steps/maturity': steps_per_maturity,
@@ -44,7 +44,7 @@ def write_to_file(filename, list_values):
 # ------------------------------- Black Scholes -----------------------------------------------------------------------#
 ########################################################################################################################
 if make_BS_data:
-    file_name = "Generated Data - BS model - 15_2_20.csv"
+    file_name = "Generated Data - BS model - 16_2_20.csv"
     seed_values = 42
     seed_paths = 73
 
