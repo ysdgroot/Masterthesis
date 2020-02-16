@@ -26,7 +26,7 @@ class HestonModel(StockModel):
             raise ValueError("Incorrect correlation")
         self.correlation_processes = correlation_processes
 
-    def get_stock_prices(self, amount_paths, start_price, maturity, time_step_per_maturity=100, seed=42):
+    def get_stock_prices(self, amount_paths, start_price, maturity, time_step_per_maturity=100, seed=None):
         """
         Simulations of stock prices based on the Heston model.
         # todo: beschrijving van het heston model
@@ -51,9 +51,8 @@ class HestonModel(StockModel):
                 The first column is the start_price.
         """
 
-        # TODO: process versnellen door vectorieel te werken (matrix vermeningvuldigingen)
-
-        np.random.seed(seed=seed)
+        if seed is not None:
+            np.random.seed(seed=seed)
 
         dt = 1 / time_step_per_maturity
         number_of_steps = maturity * time_step_per_maturity
@@ -72,17 +71,16 @@ class HestonModel(StockModel):
             for i in range(number_of_steps):
                 last_price = stock_prices[-1]
                 last_vol = volatilities[-1]
+                not_negative_vol = max(last_vol, 0)
 
                 dS = last_price * (self.interest_rate * dt + np.sqrt(last_vol) * weiner_stock[i])
-                dnu = self.rate_revert_to_long * (self.long_variance - last_vol) * dt + \
+                dnu = self.rate_revert_to_long * (self.long_variance - not_negative_vol) * dt + \
                       self.volatility_of_volatility * \
-                      np.sqrt(last_vol) * weiner_volatility[i]
+                      np.sqrt(not_negative_vol) * weiner_volatility[i]
 
+                # adding the next stock prices and volatilities
                 stock_prices.append(stock_prices[-1] + dS)
-
-                # todo: bekijk waarom dit soms negatief kan zijn, door afronding? floating points? Feller conditie?
-                toevoeg_vol = max(0, volatilities[-1] + dnu)
-                volatilities.append(toevoeg_vol)
+                volatilities.append(volatilities[-1] + dnu)
             all_stock_prices.append(stock_prices)
             all_volatilities.append(volatilities)
 
