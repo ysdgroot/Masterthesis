@@ -26,7 +26,7 @@ class HestonModel(StockModel):
             raise ValueError("Incorrect correlation")
         self.correlation_processes = correlation_processes
 
-    def get_stock_prices(self, amount_paths, start_price, maturity, time_step_per_maturity=100, seed=42):
+    def get_stock_prices(self, amount_paths, start_price, maturity, time_step_per_maturity=100, seed=None):
         """
         Simulations of stock prices based on the Heston model.
         # todo: beschrijving van het heston model
@@ -51,9 +51,8 @@ class HestonModel(StockModel):
                 The first column is the start_price.
         """
 
-        # TODO: process versnellen door vectorieel te werken (matrix vermeningvuldigingen)
-
-        np.random.seed(seed=seed)
+        if seed is not None:
+            np.random.seed(seed=seed)
 
         dt = 1 / time_step_per_maturity
         number_of_steps = maturity * time_step_per_maturity
@@ -65,34 +64,39 @@ class HestonModel(StockModel):
             stock_prices = [start_price]
             volatilities = [self.start_volatility]
 
-            weiner_stock, weiner_volatility = self.get_weiner_processes_with_correlation(self.correlation_processes,
+            # todo: stel matrix van processen voor
+            weiner_stock, weiner_volatility = self.get_weiner_processes_with_correlation(1,
+                                                                                         self.correlation_processes,
                                                                                          maturity,
                                                                                          time_step_per_maturity=time_step_per_maturity)
 
             for i in range(number_of_steps):
                 last_price = stock_prices[-1]
                 last_vol = volatilities[-1]
+                not_negative_vol = max(last_vol, 0)
 
                 dS = last_price * (self.interest_rate * dt + np.sqrt(last_vol) * weiner_stock[i])
-                dnu = self.rate_revert_to_long * (self.long_variance - last_vol) * dt + \
+                dnu = self.rate_revert_to_long * (self.long_variance - not_negative_vol) * dt + \
                       self.volatility_of_volatility * \
-                      np.sqrt(last_vol) * weiner_volatility[i]
+                      np.sqrt(not_negative_vol) * weiner_volatility[i]
 
+                # adding the next stock prices and volatilities
                 stock_prices.append(stock_prices[-1] + dS)
-
-                # todo: bekijk waarom dit soms negatief kan zijn, door afronding? floating points? Feller conditie?
-                toevoeg_vol = max(0, volatilities[-1] + dnu)
-                volatilities.append(toevoeg_vol)
+                volatilities.append(volatilities[-1] + dnu)
             all_stock_prices.append(stock_prices)
             all_volatilities.append(volatilities)
 
         return np.array(all_stock_prices)
 
+    # todo: schrijf de methode zodanig dat het een matrix is en maar 1 keer moet opgeroepen moet worden.
     @staticmethod
-    def get_weiner_processes_with_correlation(correlation, maturity, time_step_per_maturity=100):
+    def get_weiner_processes_with_correlation(n_paths, correlation, maturity, time_step_per_maturity=100):
         """
         Gives 2 Brownian motions which are correlated with each other.
 
+        :param n_paths: A positive integer.
+                        For the number of paths that needs to be generated.
+                        Changes the output of this function.
         :param correlation: Value between -1 and 1.
                             This value is the correlation of the 2 brownian motions.
         :param maturity: Positive integer.
@@ -105,13 +109,16 @@ class HestonModel(StockModel):
         :return: 2d numpy.array with shape:
                     (2, maturity * time_step_per_maturity)
                 The rows are the brownian motions and together have correlation of the given value 'correlation'
+            #todo verander de dimensie, zorg ervoor dat je 2 matrices verkrijgt
         """
 
         dt = 1 / time_step_per_maturity
         number_of_steps = maturity * time_step_per_maturity
 
         brownian_motions = np.random.randn(2, number_of_steps)
+        # brownnian_motions = np.random.randn(2, n_paths, number_of_steps)  -> dan zijn er 2 matrixen met shape (n_paths, number_of_steps)
         correlated_bm = np.array([correlation, np.sqrt(1 - correlation ** 2)]).dot(brownian_motions)
+        # todo: bekijken hoe je hiermee op een snelle manier (=vermeningvuldiging) de gecorreleerde waarde kunt krijgen.
 
         # TODO: controleer op correctheid process (variantie en stapsgrootte)
         # TODO: hoe werkt vstack precies?
@@ -128,11 +135,13 @@ class HestonModel(StockModel):
                                   rate_revert_to_long_bound,
                                   vol_of_vol_bound,
                                   correlation_bound,
-                                  seed=42):
+                                  seed=None):
 
         """
+        The generation of random variables for the Heston Model.
 
-        :param amount:
+        :param amount: A positive integer.
+                        The amount of different values, of each parameter.
         :param stock_price_bound:
         :param strike_price_bound:
         :param maturity_bound:
@@ -164,8 +173,9 @@ class HestonModel(StockModel):
                 raise ValueError
             return bounds
 
-        # set seed
-        np.random.seed(seed=seed)
+        # set seed if different from None.
+        if seed is not None:
+            np.random.seed(seed=seed)
 
         # conversion to a tuple, in increasing order and controls if the values are positive.
         stock_price_bound = conversion_and_check(stock_price_bound)

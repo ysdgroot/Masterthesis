@@ -3,6 +3,7 @@ from OptionModels.PlainVanilla import PlainVanilla
 from OptionModels.EuropeanAsian import AsianMean
 from OptionModels.EuropeanLookback import Lookback
 from joblib import Parallel, delayed
+from multiprocessing import Process, Queue, Manager, Pool
 import numpy as np
 import csv
 
@@ -10,10 +11,10 @@ make_BS_data = True
 make_VG_data = False
 make_heston_data = False
 
-n_datapoints = 50000
+n_datapoints = 10000
 
-steps_per_maturity = 400
-n_paths_optionpricing = 20000
+steps_per_maturity = 200
+n_paths_optionpricing = 15000
 
 dict_general_info = {'n_datapoints (per type) ': n_datapoints,
                      'steps/maturity': steps_per_maturity,
@@ -40,11 +41,22 @@ def write_to_file(filename, list_values):
         writer.writerow(list_values)
 
 
+def write_to_file_parallel(file_name, queue):
+    with open(file_name, 'a', newline='') as f:
+        while 1:
+            m = queue.get()
+            if m == 'kill':
+                break
+            csv.writer(f).writerow(m)
+            f.flush()
+
+
 ########################################################################################################################
 # ------------------------------- Black Scholes -----------------------------------------------------------------------#
 ########################################################################################################################
 if make_BS_data:
-    file_name = "Generated Data - BS model - 11_2_20.csv"
+    # file_name = "Generated Data - BS model - 16_2_20.csv"
+    file_name = "TestFile Parallelisation.csv"
     seed_values = 42
     seed_paths = 73
 
@@ -97,7 +109,7 @@ if make_BS_data:
 
 
     # for parallelization
-    def calculate_save_price(i):
+    def calculate_save_price(i, queue):
         print("Datapoint {}".format(i))
 
         interest_rate = interest_rates[i]
@@ -130,12 +142,37 @@ if make_BS_data:
         values_call = values_rand + ['C'] + dict_option_values['C'] + [exact_value_call]
         values_put = values_rand + ['P'] + dict_option_values['P'] + [exact_value_put]
 
-        write_to_file(file_name, values_call)
-        write_to_file(file_name, values_put)
+        # putting in a queue so there will be no datapoints lost during the process of writing
+        queue.put(values_call)
+        queue.put(values_put)
 
+        # write_to_file(file_name, values_call, queue)
+        # write_to_file(file_name, values_put, queue)
 
     # start collection datapoints in parallel (4 cores)
-    Parallel(4)(delayed(calculate_save_price)(i) for i in range(n_datapoints))
+    # Parallel(4)(delayed(calculate_save_price)(i) for i in range(n_datapoints))
+
+
+def main():
+    manager = Manager()
+    queue = manager.Queue()
+    pool = Pool(5)
+    watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
+    jobs = []
+    for j in range(n_datapoints):
+        job = pool.apply_async(calculate_save_price, (j, queue))
+        jobs.append(job)
+
+    for job in jobs:
+        job.get()
+
+    queue.put('kill')
+    pool.close()
+    pool.join()
+
+
+if __name__ == "__main__":
+    main()
 
 ########################################################################################################################
 # ------------------------------- Variance Gamma ----------------------------------------------------------------------#
