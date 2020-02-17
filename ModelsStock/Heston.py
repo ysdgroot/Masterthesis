@@ -75,7 +75,7 @@ class HestonModel(StockModel):
                 last_vol = volatilities[-1]
                 not_negative_vol = max(last_vol, 0)
 
-                dS = last_price * (self.interest_rate * dt + np.sqrt(last_vol) * weiner_stock[i])
+                dS = last_price * (self.interest_rate * dt + np.sqrt(not_negative_vol) * weiner_stock[i])
                 dnu = self.rate_revert_to_long * (self.long_variance - not_negative_vol) * dt + \
                       self.volatility_of_volatility * \
                       np.sqrt(not_negative_vol) * weiner_volatility[i]
