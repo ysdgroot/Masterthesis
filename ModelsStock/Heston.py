@@ -119,7 +119,7 @@ class HestonModel(StockModel):
         brownian_motions = np.random.randn(n_paths, 2, number_of_steps)
 
         # declare the matrix to get the correlation
-        matrix_pro = np.array([corr, np.sqrt(1 - corr ** 2)])
+        matrix_pro = np.array([correlation, np.sqrt(1 - correlation ** 2)])
 
         # do dot-product between matrixes to get the correlated process of the first element of the 'brownian_motions'
         correlated_process = np.array(list(map(lambda x: matrix_pro.dot(x), brownian_motions)))
