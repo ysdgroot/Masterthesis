@@ -1,5 +1,6 @@
 from ModelsStock.GeneralStockModel import StockModel
 import numpy as np
+import itertools
 
 
 class HestonModel(StockModel):
@@ -107,22 +108,32 @@ class HestonModel(StockModel):
                                     The higher the number te more accurate it represents the stock,
                                         but more time consuming
         :return: 2d numpy.array with shape:
-                    (2, maturity * time_step_per_maturity)
+                    (n_paths, 2, maturity * time_step_per_maturity)
                 The rows are the brownian motions and together have correlation of the given value 'correlation'
-            #todo verander de dimensie, zorg ervoor dat je 2 matrices verkrijgt
         """
 
         dt = 1 / time_step_per_maturity
         number_of_steps = maturity * time_step_per_maturity
 
-        brownian_motions = np.random.randn(2, number_of_steps)
-        # brownian_motions = np.random.randn(2, n_paths, number_of_steps)
-        # correlated_bm = np.array([[correlation, np.sqrt(1 - correlation ** 2)]] *n_paths ).dot(brownian_motions)
-        correlated_bm = np.array([correlation, np.sqrt(1 - correlation ** 2)]).dot(brownian_motions)
+        # brownian_motions = np.random.randn(2, number_of_steps)
+        brownian_motions = np.random.randn(n_paths, 2, number_of_steps)
+
+        # declare the matrix to get the correlation
+        matrix_pro = np.array([corr, np.sqrt(1 - corr ** 2)])
+
+        # do dot-product between matrixes to get the correlated process of the first element of the 'brownian_motions'
+        correlated_process = np.array(list(map(lambda x: matrix_pro.dot(x), brownian_motions)))
+
+        # put everything in the correct form of matrix and the correct values(jumps) of the process.
+        total_process_paths = np.array([[brownian_motions[i, 0], correlated_process[i]] for i in range(n_paths)]) \
+                              * np.sqrt(dt)
+
+        # correlated_bm = np.array([correlation, np.sqrt(1 - correlation ** 2)]).dot(brownian_motions)
         # todo: bekijken hoe je hiermee op een snelle manier (=vermeningvuldiging) de gecorreleerde waarde kunt krijgen.
 
         # TODO: controleer op correctheid process (variantie en stapsgrootte)
-        return np.vstack((brownian_motions[0], correlated_bm)) * np.sqrt(dt)
+        # return np.vstack((brownian_motions[0], correlated_bm)) * np.sqrt(dt)
+        return total_process_paths
 
     @staticmethod
     def generate_random_variables(amount,
@@ -225,6 +236,3 @@ class HestonModel(StockModel):
 
         return data_dict
 
-# 7paden en maturity = 5; steps = 100
-# weiner_process = HestonModel.get_weiner_processes_with_correlation(7, 0.5, 5)
-# print(weiner_process.shape)
