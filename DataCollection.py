@@ -2,7 +2,7 @@ from ModelsStock.BlackScholes import BlackScholes
 from OptionModels.PlainVanilla import PlainVanilla
 from OptionModels.EuropeanAsian import AsianMean
 from OptionModels.EuropeanLookback import Lookback
-from joblib import Parallel, delayed
+# from joblib import Parallel, delayed
 from multiprocessing import Process, Queue, Manager, Pool
 import numpy as np
 import csv
@@ -55,8 +55,7 @@ def write_to_file_parallel(file_name, queue):
 # ------------------------------- Black Scholes -----------------------------------------------------------------------#
 ########################################################################################################################
 if make_BS_data:
-    # file_name = "Generated Data - BS model - 16_2_20.csv"
-    file_name = "TestFile Parallelisation.csv"
+    file_name = "Generated Data - BS model - 17_2_20.csv"
     seed_values = 42
     seed_paths = 73
 
@@ -109,15 +108,15 @@ if make_BS_data:
 
 
     # for parallelization
-    def calculate_save_price(i, queue):
-        print("Datapoint {}".format(i))
+    def calculate_save_price(position, queue):
+        print("Datapoint {}".format(position))
 
-        interest_rate = interest_rates[i]
-        vol = volatilities[i]
-        start_price = stock_prices[i]
-        strike_price = strike_prices[i]
-        strike_price_perc = strike_prices_precentages[i]
-        maturity = maturities[i]
+        interest_rate = interest_rates[position]
+        vol = volatilities[position]
+        start_price = stock_prices[position]
+        strike_price = strike_prices[position]
+        strike_price_perc = strike_prices_precentages[position]
+        maturity = maturities[position]
 
         bs = BlackScholes(interest_rate, vol)
 
@@ -134,7 +133,7 @@ if make_BS_data:
                                                       strike_price=strike_price,
                                                       option_type=['C', 'P'],
                                                       steps_per_maturity=steps_per_maturity,
-                                                      seed=seed_paths + i)
+                                                      seed=seed_paths + position)
 
         # write datapoints in the csv-file
         values_rand = [start_price, strike_price, strike_price_perc, interest_rate, vol, maturity]
@@ -157,6 +156,8 @@ def main():
     manager = Manager()
     queue = manager.Queue()
     pool = Pool(5)
+
+    # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
     jobs = []
     for j in range(n_datapoints):

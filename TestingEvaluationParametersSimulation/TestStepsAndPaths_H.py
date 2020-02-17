@@ -16,13 +16,14 @@ from joblib import Parallel, delayed
 
 # TODO: controleer snelheid van Heston model, zodat alle waarden ook bepaald kunnen worden
 #      verander ook de methode, want het Euler model om het Heston model kan negatieve waarden verkrijgen, dit moet worden opgelost (zie papers)
-time_steps_per_maturities = [i for i in range(100, 201, 100)]
+time_steps_per_maturities = [i for i in range(100, 101, 100)]
 amount_paths = [i for i in range(1000, 2001, 1000)]
 
-write_header_to_files = [False, False, False]
-do_tests = [False, False, False]
+write_header_to_files = [True, True, True]
+do_tests = [True, True, True]
 
 number_iterations = 50
+# number_iterations = 10
 
 # The different file_name to write through
 file_name_standard = 'Test-steps and accuracy-H-v1.csv'
@@ -98,7 +99,7 @@ def function_per_amount_paths(amount):
 
             for bool_test, file_name, option in zip(do_tests, file_names, options):
                 if bool_test:
-                    approx_call = option.get_price(paths, strike_price=strike_price)
+                    approx_call = option.get_price(paths, maturity, interest_rate, strike_price=strike_price)
 
                     variance = np.var(paths[:, -1])
 
@@ -107,4 +108,6 @@ def function_per_amount_paths(amount):
                         csv.writer(fd).writerow(temp_result)
 
 
-Parallel(n_jobs=4)(delayed(function_per_amount_paths)(amount) for amount in amount_paths)
+# only start test if a least 1 test needs to be done
+if sum(do_tests) != 0:
+    Parallel(n_jobs=4)(delayed(function_per_amount_paths)(amount) for amount in amount_paths)

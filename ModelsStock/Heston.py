@@ -116,12 +116,12 @@ class HestonModel(StockModel):
         number_of_steps = maturity * time_step_per_maturity
 
         brownian_motions = np.random.randn(2, number_of_steps)
-        # brownnian_motions = np.random.randn(2, n_paths, number_of_steps)  -> dan zijn er 2 matrixen met shape (n_paths, number_of_steps)
+        # brownian_motions = np.random.randn(2, n_paths, number_of_steps)
+        # correlated_bm = np.array([[correlation, np.sqrt(1 - correlation ** 2)]] *n_paths ).dot(brownian_motions)
         correlated_bm = np.array([correlation, np.sqrt(1 - correlation ** 2)]).dot(brownian_motions)
         # todo: bekijken hoe je hiermee op een snelle manier (=vermeningvuldiging) de gecorreleerde waarde kunt krijgen.
 
         # TODO: controleer op correctheid process (variantie en stapsgrootte)
-        # TODO: hoe werkt vstack precies?
         return np.vstack((brownian_motions[0], correlated_bm)) * np.sqrt(dt)
 
     @staticmethod
@@ -225,3 +225,6 @@ class HestonModel(StockModel):
 
         return data_dict
 
+# 7paden en maturity = 5; steps = 100
+# weiner_process = HestonModel.get_weiner_processes_with_correlation(7, 0.5, 5)
+# print(weiner_process.shape)
