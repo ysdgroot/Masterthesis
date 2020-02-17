@@ -12,6 +12,7 @@ make_VG_data = False
 make_heston_data = False
 
 n_datapoints = 10000
+# balbalbal
 
 steps_per_maturity = 200
 n_paths_optionpricing = 15000
