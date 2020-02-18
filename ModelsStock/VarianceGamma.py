@@ -143,7 +143,7 @@ class VarianceGamma(StockModel):
                                   theta_bound,
                                   sigma_bound,
                                   nu_bound,
-                                  seed=42):
+                                  seed=None):
         """
 
         :param amount:
@@ -177,7 +177,8 @@ class VarianceGamma(StockModel):
             return bounds
 
         # set seed
-        np.random.seed(seed=seed)
+        if seed is not None:
+            np.random.seed(seed=seed)
 
         # conversion to a tuple, in increasing order and controls if the values are positive.
         stock_price_bound = conversion_and_check(stock_price_bound)

@@ -1,4 +1,6 @@
 from ModelsStock.BlackScholes import BlackScholes
+from ModelsStock.VarianceGamma import VarianceGamma
+from ModelsStock.Heston import HestonModel
 from OptionModels.PlainVanilla import PlainVanilla
 from OptionModels.EuropeanAsian import AsianMean
 from OptionModels.EuropeanLookback import Lookback
@@ -6,6 +8,7 @@ from OptionModels.EuropeanLookback import Lookback
 from multiprocessing import Process, Queue, Manager, Pool
 import numpy as np
 import csv
+from datetime import datetime
 
 make_BS_data = True
 make_VG_data = False
@@ -51,13 +54,24 @@ def write_to_file_parallel(file_name, queue):
             f.flush()
 
 
+def get_name_file(model, forward_pricing_bool):
+    date_today = datetime.now().strftime('%d-%m-%Y')
+    forward_bool = "(F)" if forward_pricing_bool else ""
+    name_file = "Generated Data - {} model - {}{}.csv".format(model, date_today, forward_bool)
+    return name_file
+
+
 ########################################################################################################################
 # ------------------------------- Black Scholes -----------------------------------------------------------------------#
 ########################################################################################################################
 if make_BS_data:
-    file_name = "Generated Data - BS model - 17_2_20.csv"
-    seed_values = 42
-    seed_paths = 73
+    forward_pricing = True
+    model_name = "BS"
+
+    file_name = get_name_file(model_name, forward_pricing)
+
+    seed_values = 41
+    seed_paths = 72
 
     stock_price_bound = (90, 110)
     strike_price_bound = (0.4, 1.6)
@@ -71,7 +85,8 @@ if make_BS_data:
                        "Interest_rate": interest_rate_bound,
                        "Volatility": volatility_bound,
                        "Seed values": seed_values,
-                       "Seed paths": seed_paths}
+                       "Seed paths": seed_paths,
+                       "Forward pricing": forward_pricing}
 
     column_names_values = ["stock_price", "strike_price", "strike_price_percent",
                            "interest_rate", "volatility", "maturity", "call/put"]
@@ -103,8 +118,11 @@ if make_BS_data:
     volatilities = random_values["volatility"]
     maturities = random_values["maturity"]
     stock_prices = random_values["stock_price"]
-    strike_prices = random_values["strike_price"]
     strike_prices_precentages = random_values["strike_price_percent"]
+
+    # change the strike prices if we want to use the forward pricing
+    strike_prices = random_values["strike_price"] if not forward_pricing \
+        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_precentages
 
 
     # for parallelization
@@ -179,30 +197,36 @@ if __name__ == "__main__":
 # ------------------------------- Variance Gamma ----------------------------------------------------------------------#
 ########################################################################################################################
 if make_VG_data:
-    file_name = "Generated Data - VG model.csv"
-    seed_values = 42
-    seed_paths = 73
+    forward_pricing = False
+    model_name = "VG"
+
+    file_name = get_name_file(model_name, forward_pricing)
+    # file_name = "Generated Data - VG model.csv"
+    seed_values = 43
+    seed_paths = 74
 
     stock_price_bound = (90, 110)
     strike_price_bound = (0.4, 1.6)
     interest_rate_bound = (0.01, 0.035)
     maturity_bound = (1, 60)  # todo vragen wat ik hier best doe.
     volatility_bound = (0.01, 0.2)
+    print("Methode staat niet op punt, enkele variabelen zijn niet correct geplaatst!!")
+    theta_bound = (0, 0)  # TODO zoeken naar representatieve waarden hiervoor
+    sigma_bound = (0, 0)
+    nu_bound = (0, 0)
 
     data_boundaries = {"Stock price": stock_price_bound,
                        "Strike price": strike_price_bound,
                        "Maturity": maturity_bound,
                        "Volatility": volatility_bound,
                        "Seed values": seed_values,
-                       "Seed paths": seed_paths}
+                       "Seed paths": seed_paths,
+                       "Forward pricing": forward_pricing}
 
     column_names_values = ["stock_price", "strike_price", "strike_price_percent",
                            "interest_rate", "volatility", "maturity", "call/put"]
 
     col_names = column_names_values + column_names_options
-
-    # adding last column for the theoretical value of the option, only for BS model
-    col_names.append("opt_exact_standard")
 
     with open(file_name, 'w', newline='') as fd:
         for key, val in data_boundaries.items():
@@ -210,21 +234,30 @@ if make_VG_data:
         # writing the header
         csv.writer(fd).writerow(col_names)
 
-    random_values = BlackScholes.generate_random_variables(n_datapoints,
-                                                           stock_price_bound,
-                                                           strike_price_bound,
-                                                           maturity_bound,
-                                                           interest_rate_bound,
-                                                           volatility_bound,
-                                                           seed=seed_values)
+    random_values = VarianceGamma.generate_random_variables(n_datapoints,
+                                                            stock_price_bound,
+                                                            strike_price_bound,
+                                                            maturity_bound,
+                                                            interest_rate_bound,
+                                                            theta_bound,
+                                                            sigma_bound,
+                                                            nu_bound,
+                                                            seed=seed_values)
 
     # setting the values to a readable manner
     interest_rates = random_values["interest_rate"]
     volatilities = random_values["volatility"]
     maturities = random_values["maturity"]
     stock_prices = random_values["stock_price"]
-    strike_prices = random_values["strike_price"]
     strike_prices_precentages = random_values["strike_price_percent"]
+
+    # change the strike prices if we want to use the forward pricing
+    strike_prices = random_values["strike_price"] if not forward_pricing \
+        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_precentages
+
+    thetas = random_values["theta"]
+    sigmas = random_values["sigma"]
+    nus = random_values["nu"]
 
     # set seed
     np.random.seed(seed=seed_paths)
