@@ -19,7 +19,7 @@ class VarianceGamma(StockModel):
         self.sigma = sigma
         self.nu = nu
 
-    def get_stock_prices(self, amount_paths, start_price, maturity, time_step_per_maturity=100, seed=None):
+    def get_stock_prices(self, amount_paths, start_price, maturity, steps_per_maturity=100, seed=None):
         """
         Simulations of stock prices based on the Variance Gamma model.
 
@@ -30,7 +30,7 @@ class VarianceGamma(StockModel):
         :param maturity: Positive integer.
                         The total time period for the simulation.
                         The period of one payment of the interest_rate should be the same as maturity=1.
-        :param time_step_per_maturity: A positive integer. (default = 100)
+        :param steps_per_maturity: A positive integer. (default = 100)
                                     The amount of small steps taken to represent 1 maturity passing.
                                     The higher the number te more accurate it represents the stock,
                                         but more time consuming
@@ -45,8 +45,8 @@ class VarianceGamma(StockModel):
         if seed is not None:
             np.random.seed(seed=seed)
 
-        number_of_evaluations = time_step_per_maturity * maturity
-        dt = 1 / time_step_per_maturity
+        number_of_evaluations = steps_per_maturity * maturity
+        dt = 1 / steps_per_maturity
 
         # omega based on the article
         omega = np.log(1 - self.theta * self.nu - self.nu * self.sigma ** 2 / 2) / self.nu
@@ -58,7 +58,7 @@ class VarianceGamma(StockModel):
 
         # This test is faster than the 'variance_process' function.
         variance_process = self.variance_process_brownian_motion(amount_paths,
-                                                                 time_step_per_maturity=time_step_per_maturity,
+                                                                 steps_per_maturity=steps_per_maturity,
                                                                  maturity=maturity)
 
         # Start with the 0 on position 0 (so S_t=0 = S0)
@@ -74,7 +74,7 @@ class VarianceGamma(StockModel):
 
         return start_price * np.exp(total_exponent)
 
-    def variance_process(self, amount_paths, maturity=1, time_step_per_maturity=100):
+    def variance_process(self, amount_paths, maturity=1, steps_per_maturity=100):
         """
         Creates a sequence of numbers that represents the Gamma Variance process based on 2 Variance Gamma processes
         This function is bit slower than the 'variance_process_brownian_motion' function
@@ -84,7 +84,7 @@ class VarianceGamma(StockModel):
         :param maturity: Positive integer.
                         The total time period for the simulation.
                         The period of one payment of the interest_rate should be the same as maturity=1.
-        :param time_step_per_maturity: A positive integer. (default = 100)
+        :param steps_per_maturity: A positive integer. (default = 100)
                                     The amount of small steps taken to represent 1 maturity passing.
                                     The higher the number te more accurate it represents the stock,
                                         but more time consuming
@@ -94,18 +94,20 @@ class VarianceGamma(StockModel):
         """
         # TODO: Geef referentie van document van waar het op gebaseerd is.
 
-        number_of_steps = maturity * time_step_per_maturity
-        size_increments = 1 / time_step_per_maturity
+        number_of_steps = maturity * steps_per_maturity
+        size_increments = 1 / steps_per_maturity
 
         mu_plus = (np.sqrt(self.theta ** 2 + 2 * self.sigma ** 2 / self.nu) + self.theta) / 2
         mu_min = (np.sqrt(self.theta ** 2 + 2 * self.sigma ** 2 / self.nu) - self.theta) / 2
 
-        gamma_process_plus = np.random.gamma(size_increments / self.nu, self.nu * mu_plus, (number_of_steps, amount_paths))
-        gamma_process_min = np.random.gamma(size_increments / self.nu, self.nu * mu_min, (number_of_steps, amount_paths))
+        gamma_process_plus = np.random.gamma(size_increments / self.nu, self.nu * mu_plus,
+                                             (number_of_steps, amount_paths))
+        gamma_process_min = np.random.gamma(size_increments / self.nu, self.nu * mu_min,
+                                            (number_of_steps, amount_paths))
 
         return np.cumsum(gamma_process_plus - gamma_process_min, axis=0).transpose()
 
-    def variance_process_brownian_motion(self, amount_paths, maturity=1, time_step_per_maturity=100):
+    def variance_process_brownian_motion(self, amount_paths, maturity=1, steps_per_maturity=100):
         """
         Creates a sequence of numbers that represents the Gamma Variance process based on Brownian motion.
         With a standard normal distribution in the process.
@@ -116,7 +118,7 @@ class VarianceGamma(StockModel):
         :param maturity: Positive integer.
                         The total time period for the simulation.
                         The period of one payment of the interest_rate should be the same as maturity=1.
-        :param time_step_per_maturity: A positive integer. (default = 100)
+        :param steps_per_maturity: A positive integer. (default = 100)
                                     The amount of small steps taken to represent 1 maturity passing.
                                     The higher the number te more accurate it represents the stock,
                                         but more time consuming
@@ -125,10 +127,10 @@ class VarianceGamma(StockModel):
                         (amount, maturity * time_step_per_maturity)
         """
 
-        number_of_steps = maturity * time_step_per_maturity
-        size_increments = 1 / time_step_per_maturity
+        number_of_steps = maturity * steps_per_maturity
+        size_increments = 1 / steps_per_maturity
 
-        gamma_process = np.random.gamma(size_increments/self.nu, self.nu, (number_of_steps, amount_paths))
+        gamma_process = np.random.gamma(size_increments / self.nu, self.nu, (number_of_steps, amount_paths))
         brownian_motion = np.random.randn(number_of_steps, amount_paths)
 
         return np.cumsum(self.theta * gamma_process + self.sigma * np.sqrt(gamma_process) * brownian_motion,
@@ -159,7 +161,7 @@ class VarianceGamma(StockModel):
         """
         # todo: schrijven van documentatie
 
-        def conversion_and_check(value):
+        def conversion_and_check(value, check_positive=True):
             # convert value into a tuple in increasing order.
             # control if the values are positive
             if len(value) == 1:
@@ -172,8 +174,9 @@ class VarianceGamma(StockModel):
                 raise TypeError
 
             # only 1 check is necessary, because this is the minimum.
-            if bounds[0] < 0:
-                raise ValueError
+            if check_positive:
+                if bounds[0] < 0:
+                    raise ValueError
             return bounds
 
         # set seed
@@ -185,7 +188,7 @@ class VarianceGamma(StockModel):
         strike_price_bound = conversion_and_check(strike_price_bound)
         maturity_bound = conversion_and_check(maturity_bound)
         interest_rate_bound = conversion_and_check(interest_rate_bound)
-        theta_bound = conversion_and_check(theta_bound)
+        theta_bound = conversion_and_check(theta_bound, check_positive=False)
         sigma_bound = conversion_and_check(sigma_bound)
         nu_bound = conversion_and_check(nu_bound)
 
@@ -211,6 +214,7 @@ class VarianceGamma(StockModel):
         data_dict = {"stock_price": stock_prices,
                      "strike_price": strike_prices,
                      "interest_rate": interest_rates,
+                     "strike_price_percent": strike_prices_percentage,
                      "maturity": maturities,
                      "theta": thetas,
                      "sigma": sigmas,

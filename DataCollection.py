@@ -4,13 +4,12 @@ from ModelsStock.Heston import HestonModel
 from OptionModels.PlainVanilla import PlainVanilla
 from OptionModels.EuropeanAsian import AsianMean
 from OptionModels.EuropeanLookback import Lookback
-# from joblib import Parallel, delayed
-from multiprocessing import Process, Queue, Manager, Pool
+from multiprocessing import Manager, Pool
 import numpy as np
 import csv
 from datetime import datetime
 
-make_BS_data = True
+make_BS_data = False
 make_VG_data = False
 make_heston_data = False
 
@@ -44,8 +43,8 @@ def write_to_file(filename, list_values):
         writer.writerow(list_values)
 
 
-def write_to_file_parallel(file_name, queue):
-    with open(file_name, 'a', newline='') as f:
+def write_to_file_parallel(name_file, queue):
+    with open(name_file, 'a', newline='') as f:
         while 1:
             m = queue.get()
             if m == 'kill':
@@ -65,7 +64,7 @@ def get_name_file(model, forward_pricing_bool):
 # ------------------------------- Black Scholes -----------------------------------------------------------------------#
 ########################################################################################################################
 if make_BS_data:
-    forward_pricing = True
+    forward_pricing = False
     model_name = "BS"
 
     file_name = get_name_file(model_name, forward_pricing)
@@ -126,8 +125,8 @@ if make_BS_data:
 
 
     # for parallelization
-    def calculate_save_price(position, queue):
-        print("Datapoint {}".format(position))
+    def calculate_save_price_bs(position, queue):
+        print("BS Datapoint {}".format(position))
 
         interest_rate = interest_rates[position]
         vol = volatilities[position]
@@ -163,36 +162,6 @@ if make_BS_data:
         queue.put(values_call)
         queue.put(values_put)
 
-        # write_to_file(file_name, values_call, queue)
-        # write_to_file(file_name, values_put, queue)
-
-    # start collection datapoints in parallel (4 cores)
-    # Parallel(4)(delayed(calculate_save_price)(i) for i in range(n_datapoints))
-
-
-def main():
-    manager = Manager()
-    queue = manager.Queue()
-    pool = Pool(5)
-
-    # start file writer in other pool
-    watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
-    jobs = []
-    for j in range(n_datapoints):
-        job = pool.apply_async(calculate_save_price, (j, queue))
-        jobs.append(job)
-
-    for job in jobs:
-        job.get()
-
-    queue.put('kill')
-    pool.close()
-    pool.join()
-
-
-if __name__ == "__main__":
-    main()
-
 ########################################################################################################################
 # ------------------------------- Variance Gamma ----------------------------------------------------------------------#
 ########################################################################################################################
@@ -208,23 +177,24 @@ if make_VG_data:
     stock_price_bound = (90, 110)
     strike_price_bound = (0.4, 1.6)
     interest_rate_bound = (0.01, 0.035)
-    maturity_bound = (1, 60)  # todo vragen wat ik hier best doe.
+    maturity_bound = (1, 60)
     volatility_bound = (0.01, 0.2)
-    print("Methode staat niet op punt, enkele variabelen zijn niet correct geplaatst!!")
-    theta_bound = (0, 0)  # TODO zoeken naar representatieve waarden hiervoor
-    sigma_bound = (0, 0)
-    nu_bound = (0, 0)
+    theta_bound = (-0.35, -0.05)
+    sigma_bound = (0.05, 0.45)
+    nu_bound = (0.55, 0.95)
 
     data_boundaries = {"Stock price": stock_price_bound,
                        "Strike price": strike_price_bound,
                        "Maturity": maturity_bound,
-                       "Volatility": volatility_bound,
+                       "Theta": volatility_bound,
+                       "Sigma": sigma_bound,
+                       "Nu": nu_bound,
                        "Seed values": seed_values,
                        "Seed paths": seed_paths,
                        "Forward pricing": forward_pricing}
 
     column_names_values = ["stock_price", "strike_price", "strike_price_percent",
-                           "interest_rate", "volatility", "maturity", "call/put"]
+                           "interest_rate", "theta", "sigma", "nu", "maturity", "call/put"]
 
     col_names = column_names_values + column_names_options
 
@@ -246,7 +216,6 @@ if make_VG_data:
 
     # setting the values to a readable manner
     interest_rates = random_values["interest_rate"]
-    volatilities = random_values["volatility"]
     maturities = random_values["maturity"]
     stock_prices = random_values["stock_price"]
     strike_prices_precentages = random_values["strike_price_percent"]
@@ -262,38 +231,89 @@ if make_VG_data:
     # set seed
     np.random.seed(seed=seed_paths)
 
-    # todo: parallelliseer
+
+    # for parallelization
     # start collection datapoints
-    for i in range(n_datapoints):
-        print("Datapoint {}".format(i))
+    def calculate_save_price_vg(position, queue):
+        print("VG Datapoint {}".format(position))
 
-        interest_rate = interest_rates[i]
-        vol = interest_rates[i]
-        start_price = stock_prices[i]
-        strike_price = strike_prices[i]
-        strike_price_perc = strike_prices_precentages[i]
-        maturity = maturities[i]
+        interest_rate = interest_rates[position]
+        theta = thetas[position]
+        sigma = sigmas[position]
+        nu = nus[position]
+        start_price = stock_prices[position]
+        maturity = maturities[position]
+        strike_price = strike_prices[position]
+        strike_price_perc = strike_prices_precentages[position]
 
-        bs = BlackScholes(interest_rate, vol)
-
-        # calculation exact option prices
-        exact_value_call = bs.solution_call_option(start_price, strike_price, maturity, interest_rate, vol)
-        exact_value_put = bs.solution_put_option(start_price, strike_price, maturity, interest_rate, vol)
+        vg = VarianceGamma(interest_rate, theta, sigma, nu)
 
         # start simulation and calculation of the different options
-        dict_option_values = bs.get_price_simulations(options,
+        dict_option_values = vg.get_price_simulations(options,
                                                       n_paths_optionpricing,
                                                       start_price,
                                                       maturity,
+                                                      interest_rate,
                                                       strike_price=strike_price,
                                                       option_type=['C', 'P'],
-                                                      steps_per_maturity=steps_per_maturity)
+                                                      steps_per_maturity=steps_per_maturity,
+                                                      seed=seed_paths + position)
 
         # write datapoints in the csv-file
-        values = [start_price, strike_price, strike_price_perc, interest_rate, vol, maturity]
+        values = [start_price, strike_price, strike_price_perc, interest_rate, theta, sigma, nu, maturity]
 
-        values_call = values + ['C'] + dict_option_values['C'] + [exact_value_call]
-        values_put = values + ['P'] + dict_option_values['P'] + [exact_value_put]
+        values_call = values + ['C'] + dict_option_values['C']
+        values_put = values + ['P'] + dict_option_values['P']
 
-        write_to_file(file_name, values_call)
-        write_to_file(file_name, values_put)
+        # put in Queue so no row will be lost when writing to it
+        queue.put(values_call)
+        queue.put(values_put)
+
+
+########################################################################################################################
+def main_bs():
+    manager = Manager()
+    queue = manager.Queue()
+    pool = Pool(5)
+
+    # start file writer in other pool
+    watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
+    jobs = []
+    for j in range(n_datapoints):
+        job = pool.apply_async(calculate_save_price_bs, (j, queue))
+        jobs.append(job)
+
+    for job in jobs:
+        job.get()
+
+    queue.put('kill')
+    pool.close()
+    pool.join()
+
+
+def main_vg():
+    manager = Manager()
+    queue = manager.Queue()
+    pool = Pool(5)
+
+    # start file writer in other pool
+    watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
+    jobs = []
+    for j in range(n_datapoints):
+        job = pool.apply_async(calculate_save_price_vg, (j, queue))
+        jobs.append(job)
+
+    for job in jobs:
+        job.get()
+
+    queue.put('kill')
+    pool.close()
+    pool.join()
+
+
+if __name__ == "__main__":
+    print('Start')
+    if make_BS_data:
+        main_bs()
+    if make_VG_data:
+        main_vg()

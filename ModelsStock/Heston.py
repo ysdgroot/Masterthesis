@@ -269,28 +269,27 @@ class HestonModel(StockModel):
 
         return data_dict
 
-
-import matplotlib.pyplot as plt
-
-maturity = 1
-interest_rate = 0.0319
-start_vol = 0.010201
-long_var = 0.019
-rate_revert = 6.21
-vol_of_vol = 0.61
-correlation = -0.7
-
-start_price = 100
-strike_price = 100
-
-# Construction object for the Heston model
-heston = HestonModel(interest_rate, start_vol, long_var, rate_revert, vol_of_vol, correlation)
-
-n_paths = 10000
-model = heston.get_stock_prices(n_paths, 100, maturity, time_step_per_maturity=500)[0]
-# plt.plot(model)
-# plt.show()
-
-option_standard = PlainVanilla()
-
-print(option_standard.get_price(model, maturity, interest_rate))
+# import matplotlib.pyplot as plt
+#
+# maturity = 1
+# interest_rate = 0.0319
+# start_vol = 0.010201
+# long_var = 0.019
+# rate_revert = 6.21
+# vol_of_vol = 0.61
+# correlation = -0.7
+#
+# start_price = 100
+# strike_price = 100
+#
+# # Construction object for the Heston model
+# heston = HestonModel(interest_rate, start_vol, long_var, rate_revert, vol_of_vol, correlation)
+#
+# n_paths = 10000
+# model = heston.get_stock_prices(n_paths, 100, maturity, time_step_per_maturity=500)[0]
+# # plt.plot(model)
+# # plt.show()
+#
+# option_standard = PlainVanilla()
+#
+# print(option_standard.get_price(model, maturity, interest_rate))
