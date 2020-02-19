@@ -10,7 +10,7 @@ import csv
 from datetime import datetime
 
 make_BS_data = False
-make_VG_data = True
+make_VG_data = False
 make_heston_data = False
 
 n_datapoints = 10000
@@ -166,7 +166,7 @@ if make_BS_data:
 # ------------------------------- Variance Gamma ----------------------------------------------------------------------#
 ########################################################################################################################
 if make_VG_data:
-    forward_pricing = True
+    forward_pricing = False
     model_name = "VG"
 
     file_name = get_name_file(model_name, forward_pricing)
