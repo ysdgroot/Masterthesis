@@ -14,16 +14,15 @@ from joblib import Parallel, delayed
 # time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 # amount_paths = [i for i in range(1000, 20001, 1000)]
 
-# TODO: controleer snelheid van Heston model, zodat alle waarden ook bepaald kunnen worden
-#      verander ook de methode, want het Euler model om het Heston model kan negatieve waarden verkrijgen, dit moet worden opgelost (zie papers)
-time_steps_per_maturities = [i for i in range(100, 101, 100)]
-amount_paths = [i for i in range(1000, 2001, 1000)]
+time_steps_per_maturities = [i for i in range(200, 1001, 100)]
+amount_paths = [i for i in range(1000, 20001, 1000)]
 
-write_header_to_files = [True, True, True]
+# write_header_to_files = [True, True, True]
+write_header_to_files = [False, False, False]
 do_tests = [True, True, True]
 
-number_iterations = 50
-# number_iterations = 10
+# number_iterations = 50
+number_iterations = 25
 
 # The different file_name to write through
 file_name_standard = 'Test-steps and accuracy-H-v1.csv'
@@ -92,7 +91,7 @@ def function_per_amount_paths(amount):
         for i in range(number_iterations):
             start = time.perf_counter()
             paths = heston.get_stock_prices(amount, start_price, maturity, steps_per_maturity=time_step,
-                                            seed=42 + i)
+                                            seed=42 + i)[0]
             end = time.perf_counter()
             # total_time += end - start
             total_time = end - start
