@@ -91,7 +91,7 @@ def function_per_amount_paths(amount):
 
         for i in range(number_iterations):
             start = time.perf_counter()
-            paths = heston.get_stock_prices(amount, start_price, maturity, time_step_per_maturity=time_step,
+            paths = heston.get_stock_prices(amount, start_price, maturity, steps_per_maturity=time_step,
                                             seed=42 + i)
             end = time.perf_counter()
             # total_time += end - start

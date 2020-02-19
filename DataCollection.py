@@ -10,7 +10,7 @@ import csv
 from datetime import datetime
 
 make_BS_data = False
-make_VG_data = False
+make_VG_data = True
 make_heston_data = False
 
 n_datapoints = 10000
@@ -166,13 +166,13 @@ if make_BS_data:
 # ------------------------------- Variance Gamma ----------------------------------------------------------------------#
 ########################################################################################################################
 if make_VG_data:
-    forward_pricing = False
+    forward_pricing = True
     model_name = "VG"
 
     file_name = get_name_file(model_name, forward_pricing)
     # file_name = "Generated Data - VG model.csv"
-    seed_values = 43
-    seed_paths = 74
+    seed_values = 44
+    seed_paths = 75
 
     stock_price_bound = (90, 110)
     strike_price_bound = (0.4, 1.6)
