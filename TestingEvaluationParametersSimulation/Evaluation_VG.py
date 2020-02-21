@@ -1,9 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import csv
-import math
-from sklearn.linear_model import LinearRegression
 
 
 def read_data(filename):
@@ -47,9 +44,9 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
 
 
 print("Start of the Asian/Lookback functionality")
-file_n_standard = 'Test-steps and accuracy-VG-v1.csv'
-file_n_asian = 'Test-steps and accuracy-VG-v2-Asian.csv'
-file_n_lookback = 'Test-steps and accuracy-VG-v3-Lookback.csv'
+file_n_standard = 'Datafiles/Test-steps and accuracy-VG-v1.csv'
+file_n_asian = 'Datafiles/Test-steps and accuracy-VG-v2-Asian.csv'
+file_n_lookback = 'Datafiles/Test-steps and accuracy-VG-v3-Lookback.csv'
 
 data_standard = read_data(file_n_standard)
 data_asian = read_data(file_n_asian)

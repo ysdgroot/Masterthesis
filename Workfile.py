@@ -17,36 +17,9 @@ from sklearn.ensemble import RandomForestRegressor
 import math
 from sklearn.metrics import mean_squared_error
 
-# todo: zoek naar de parameter voor de seed voor deze waarde van een call optie
-# 108.10609056534858,96.33674904278789,0.8911315591840194,0.020108251483688555,0.08479734350539281,23,P,1.1547185128078203,1.9608633213494917,0.0,17.322529640563662,1.1368339589575438
-data_test = pd.read_csv("Generated Data - BS model - 16_2_20.csv", header=0, comment='#')
+data_test = pd.read_csv("Generated Data - BS model - 17_2_20.csv", header=0, comment='#')
 
-n_datapoints = 10000
-seed_values = 42
-seed_paths = 73
-
-stock_price_bound = (90, 110)
-strike_price_bound = (0.4, 1.6)
-interest_rate_bound = (0.01, 0.035)
-maturity_bound = (1, 60)
-volatility_bound = (0.01, 0.2)
-
-random_values = BlackScholes.generate_random_variables(n_datapoints,
-                                                       stock_price_bound,
-                                                       strike_price_bound,
-                                                       maturity_bound,
-                                                       interest_rate_bound,
-                                                       volatility_bound,
-                                                       seed=seed_values)
-
-stock_prices = random_values["stock_price"]
-stock_data_test = data_test["stock_price"][data_test['call/put'] == 'C'].tolist()
-print(stock_prices)
-print(stock_data_test)
-
-for counter, stock in enumerate(stock_prices):
-    if stock not in stock_data_test:
-        print(counter)
+print(data_test.shape)
 
 # option = AsianMean(1)
 # # stock_paths = np.array([[1, 2, 2, 1, 3, 2, 4, 5], [0, 1, 1, 0, 1, 2, 1, 0]])

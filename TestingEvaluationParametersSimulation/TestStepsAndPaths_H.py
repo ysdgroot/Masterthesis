@@ -4,7 +4,6 @@ from OptionModels.EuropeanAsian import AsianMean
 from OptionModels.EuropeanLookback import Lookback
 import time
 import csv
-import math
 import numpy as np
 from joblib import Parallel, delayed
 
@@ -14,20 +13,20 @@ from joblib import Parallel, delayed
 # time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 # amount_paths = [i for i in range(1000, 20001, 1000)]
 
-# TODO: controleer snelheid van Heston model, zodat alle waarden ook bepaald kunnen worden
-#      verander ook de methode, want het Euler model om het Heston model kan negatieve waarden verkrijgen, dit moet worden opgelost (zie papers)
-time_steps_per_maturities = [i for i in range(100, 201, 100)]
-amount_paths = [i for i in range(1000, 2001, 1000)]
+time_steps_per_maturities = [i for i in range(100, 1001, 100)]
+amount_paths = [i for i in range(1000, 20001, 1000)]
 
-write_header_to_files = [False, False, False]
-do_tests = [False, False, False]
+write_header_to_files = [True, True, True]
+# write_header_to_files = [False, False, False]
+do_tests = [True, True, True]
 
-number_iterations = 50
+# number_iterations = 50
+number_iterations = 25
 
 # The different file_name to write through
-file_name_standard = 'Test-steps and accuracy-H-v1.csv'
-file_name_asian = 'Test-steps and accuracy-H-v2-Asian.csv'
-file_name_lookback = 'Test-steps and accuracy-H-v3-Lookback.csv'
+file_name_standard = 'Datafiles/Test-steps and accuracy-H-v1.csv'
+file_name_asian = 'Datafiles/Test-steps and accuracy-H-v2-Asian.csv'
+file_name_lookback = 'Datafiles/Test-steps and accuracy-H-v3-Lookback.csv'
 
 file_names = [file_name_standard, file_name_asian, file_name_lookback]
 
@@ -90,15 +89,15 @@ def function_per_amount_paths(amount):
 
         for i in range(number_iterations):
             start = time.perf_counter()
-            paths = heston.get_stock_prices(amount, start_price, maturity, time_step_per_maturity=time_step,
-                                            seed=42 + i)
+            paths = heston.get_stock_prices(amount, start_price, maturity, steps_per_maturity=time_step,
+                                            seed=42 + i)[0]
             end = time.perf_counter()
             # total_time += end - start
             total_time = end - start
 
             for bool_test, file_name, option in zip(do_tests, file_names, options):
                 if bool_test:
-                    approx_call = option.get_price(paths, strike_price=strike_price)
+                    approx_call = option.get_price(paths, maturity, interest_rate, strike_price=strike_price)
 
                     variance = np.var(paths[:, -1])
 
@@ -107,4 +106,6 @@ def function_per_amount_paths(amount):
                         csv.writer(fd).writerow(temp_result)
 
 
-Parallel(n_jobs=4)(delayed(function_per_amount_paths)(amount) for amount in amount_paths)
+# only start test if a least 1 test needs to be done
+if sum(do_tests) != 0:
+    Parallel(n_jobs=4)(delayed(function_per_amount_paths)(amount) for amount in amount_paths)
