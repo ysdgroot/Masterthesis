@@ -4,7 +4,6 @@ from OptionModels.EuropeanAsian import AsianMean
 from OptionModels.EuropeanLookback import Lookback
 import time
 import csv
-import math
 import numpy as np
 from joblib import Parallel, delayed
 
@@ -14,20 +13,20 @@ from joblib import Parallel, delayed
 # time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 # amount_paths = [i for i in range(1000, 20001, 1000)]
 
-time_steps_per_maturities = [i for i in range(200, 1001, 100)]
+time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 amount_paths = [i for i in range(1000, 20001, 1000)]
 
-# write_header_to_files = [True, True, True]
-write_header_to_files = [False, False, False]
+write_header_to_files = [True, True, True]
+# write_header_to_files = [False, False, False]
 do_tests = [True, True, True]
 
 # number_iterations = 50
 number_iterations = 25
 
 # The different file_name to write through
-file_name_standard = 'Test-steps and accuracy-H-v1.csv'
-file_name_asian = 'Test-steps and accuracy-H-v2-Asian.csv'
-file_name_lookback = 'Test-steps and accuracy-H-v3-Lookback.csv'
+file_name_standard = 'Datafiles/Test-steps and accuracy-H-v1.csv'
+file_name_asian = 'Datafiles/Test-steps and accuracy-H-v2-Asian.csv'
+file_name_lookback = 'Datafiles/Test-steps and accuracy-H-v3-Lookback.csv'
 
 file_names = [file_name_standard, file_name_asian, file_name_lookback]
 

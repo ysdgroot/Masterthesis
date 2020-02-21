@@ -25,9 +25,9 @@ do_tests = [False, False, False]
 number_iterations = 50
 
 # The different file_name to write through
-file_name = 'Test-steps and accuracy-VG-v1.csv'
-file_name2 = 'Test-steps and accuracy-VG-v2-Asian.csv'
-file_name3 = 'Test-steps and accuracy-VG-v3-Lookback.csv'
+file_name = 'Datafiles/Test-steps and accuracy-VG-v1.csv'
+file_name2 = 'Datafiles/Test-steps and accuracy-VG-v2-Asian.csv'
+file_name3 = 'Datafiles/Test-steps and accuracy-VG-v3-Lookback.csv'
 
 file_names = [file_name, file_name2, file_name3]
 

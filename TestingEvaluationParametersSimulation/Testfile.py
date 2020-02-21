@@ -11,7 +11,7 @@ def read_data(filename):
 # filename = 'Test-steps and accuracy-BS-v3-Lookback.csv'
 # filename = 'Test-steps and accuracy-BS-v2-Asian.csv'
 # n_iterations = 50
-filename = 'Test-steps and accuracy-BS-v1.csv'
+filename = 'Datafiles/Test-steps and accuracy-BS-v1.csv'
 n_iterations = 20
 
 data = read_data(filename)

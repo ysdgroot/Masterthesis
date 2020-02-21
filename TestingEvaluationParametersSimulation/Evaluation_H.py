@@ -45,9 +45,9 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
 
 print("Start of the Standard/Asian/Lookback functionality")
 
-file_name_standard = 'Test-steps and accuracy-H-v1.csv'
-file_name_asian = 'Test-steps and accuracy-H-v2-Asian.csv'
-file_name_lookback = 'Test-steps and accuracy-H-v3-Lookback.csv'
+file_name_standard = 'Datafiles/Test-steps and accuracy-H-v1.csv'
+file_name_asian = 'Datafiles/Test-steps and accuracy-H-v2-Asian.csv'
+file_name_lookback = 'Datafiles/Test-steps and accuracy-H-v3-Lookback.csv'
 
 data_standard = read_data(file_name_standard)
 data_asian = read_data(file_name_asian)

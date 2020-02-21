@@ -26,7 +26,7 @@ class HestonModel(StockModel):
             raise ValueError("Incorrect correlation")
         self.correlation_processes = correlation_processes
 
-    def get_stock_prices(self, n_paths, start_price, maturity, steps_per_maturity=100, seed=None):
+    def get_stock_prices_v2(self, n_paths, start_price, maturity, steps_per_maturity=100, seed=None):
         """
         Simulations of stock prices based on the Heston model.
         # todo: beschrijving van het heston model
@@ -104,7 +104,92 @@ class HestonModel(StockModel):
 
         return total_process, all_volatilities
 
-    def get_stock_prices_naive_simulation(self, n_paths, start_price, maturity, steps_per_maturity=100, seed=None):
+    def get_stock_prices(self, n_paths, start_price, maturity, steps_per_maturity=100, seed=None):
+        """
+        Simulations of stock prices based on the Heston model.
+        # todo: beschrijving van het heston model
+
+        :param n_paths: Positive integer.
+                            This is the total number of paths generated.
+        :param start_price: Positive float.
+                            Is the starting price of the stock.
+        :param maturity: Positive integer.
+                        The total time period for the simulation.
+                        The period of one payment of the interest_rate should be the same as maturity=1.
+        :param steps_per_maturity: A positive integer. (default = 100)
+                                    The amount of small steps taken to represent 1 maturity passing.
+                                    The higher the number te more accurate it represents the stock,
+                                        but more time consuming
+        :param seed: Positive integer. (default = 42)
+                    For replication purposes, to get same 'random' values.
+        :return: 2d numpy.array of all the generated paths and volatilities, based on the Heston model.
+                shape:
+                       (2, (amount, maturity * time_step_per_maturity + 1))
+                First element is the generated paths, the second the generated volatilities (positive or 0) of each path
+                Each row represents a different path, the columns the time.
+                The first column is the start_price.
+
+        """
+
+        if seed is not None:
+            np.random.seed(seed=seed)
+
+        dt = 1 / steps_per_maturity
+        number_of_steps = maturity * steps_per_maturity
+
+        # get the full process of the correlated Brownian motions
+        all_processes = self.get_weiner_processes_with_correlation(n_paths,
+                                                                   self.correlation_processes,
+                                                                   maturity,
+                                                                   steps_per_maturity=steps_per_maturity)
+
+        weiner_stock_processes = all_processes[:, 0, :]
+        weiner_volatility_processes = all_processes[:, 1, :]
+
+        # make matrix for all the volatilities
+        all_volatilities = np.zeros((n_paths, number_of_steps))
+        # first position set to start volatility
+        all_volatilities[:, 0] = self.start_volatility
+
+        # function for each iteration per timestep
+        def func_vol(position, step_size, volatilities, weiner_volatility):
+            # get last volatilities of each path
+            last_vol = volatilities[:, position]
+            # set negative values to 0
+            not_negative_vol = last_vol.copy()
+            not_negative_vol[not_negative_vol < 0] = 0
+
+            dnu = self.rate_revert_to_long * (self.long_variance - not_negative_vol) * step_size + \
+                  self.volatility_of_volatility * np.sqrt(not_negative_vol) * weiner_volatility[:, position]
+
+            return dnu
+
+        # lambda expression to get array of the volatilities for each path
+        array_f = lambda pos, step_size, vola, process: np.asarray(func_vol(pos, step_size, vola, process))
+
+        for i in range(number_of_steps - 1):
+            all_volatilities[:, i + 1] = all_volatilities[:, i] + array_f(i, dt, all_volatilities,
+                                                                          weiner_volatility_processes)
+
+        # Because of the Euler scheme, it is possible to get negative values for Volatitlity.
+        # This cause problems because the square root is taken for the volatility.
+        all_volatilities[all_volatilities < 0] = 0
+
+        # start of the Stock model process
+        rate = self.interest_rate * dt
+        vol = np.sqrt(all_volatilities) * weiner_stock_processes
+
+        # taking the product of the previous elements til the end.
+        # not take first element of 'vol' because this is already 0, otherwise it wil get one time to much interest
+        total_process = np.cumprod(1 + rate + vol, 1)
+
+        first_column_stock = np.ones((n_paths, 1))
+        total_process = np.append(first_column_stock, total_process, axis=1)
+        total_process *= start_price
+
+        return total_process, all_volatilities
+
+    def get_stock_prices_naive_simulation_v1(self, n_paths, start_price, maturity, steps_per_maturity=100, seed=None):
         """
         # todo schrijven van documentatie
         :param n_paths:
@@ -295,8 +380,9 @@ class HestonModel(StockModel):
                      "correlation": correlations}
 
         return data_dict
-
+#
 # import matplotlib.pyplot as plt
+# from OptionModels.PlainVanilla import PlainVanilla
 # import time
 #
 # maturity = 1
@@ -314,14 +400,15 @@ class HestonModel(StockModel):
 # heston = HestonModel(interest_rate, start_vol, long_var, rate_revert, vol_of_vol, correlation)
 #
 # n_paths = 10000
+# steps = 100
 # start = time.perf_counter()
-# model_first = heston.get_stock_prices_naive_simulation(n_paths, 100, maturity, steps_per_maturity=100)[0]
+# model_first = heston.get_stock_prices(n_paths, 100, maturity, steps_per_maturity=steps)[0]
 # end = time.perf_counter()
 # # total_time += end - start
 # total_time_normal = end - start
 #
 # start = time.perf_counter()
-# model_second = heston.get_stock_prices(n_paths, 100, maturity, steps_per_maturity=100)[0]
+# model_second = heston.get_stock_prices_2(n_paths, 100, maturity, steps_per_maturity=steps)[0]
 # end = time.perf_counter()
 # total_time_new = end - start
 # # plt.plot(model)
