@@ -2,7 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-# todo bekijken om een verschil te maken met het standaard BS model, deze heeft andere namen voor de kolommen
 # Which options that needs to be evaluated BS, VG, H
 evaluate_stock_model = [True, False, False]
 model_names = ["BS", "VG", "H"]
