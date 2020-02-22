@@ -1,4 +1,7 @@
-# Stock price : (90, 110) 
+# n_datapoints (per type)  : 10000
+# steps/maturity : 200
+# n_paths/option : 15000
+# Stock price : (90, 110)
 # Strike price : (0.4, 1.6) 
 # Maturity : (1, 60)
 # Interest rate : (0.01, 0.035)

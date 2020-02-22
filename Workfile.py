@@ -17,7 +17,7 @@ from sklearn.ensemble import RandomForestRegressor
 import math
 from sklearn.metrics import mean_squared_error
 
-data_test = pd.read_csv("Generated Data - BS model - 17_2_20.csv", header=0, comment='#')
+data_test = pd.read_csv("GeneratedData/Generated Data - BS model - 17_2_20.csv", header=0, comment='#')
 
 print(data_test.shape)
 
