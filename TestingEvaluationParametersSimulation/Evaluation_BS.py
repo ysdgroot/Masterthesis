@@ -4,14 +4,14 @@ import numpy as np
 
 # todo bekijken om een verschil te maken met het standaard BS model, deze heeft andere namen voor de kolommen
 # Which options that needs to be evaluated BS, VG, H
-evaluate_stock_model = [False, True, True]
+evaluate_stock_model = [True, False, False]
 model_names = ["BS", "VG", "H"]
 dict_model_names = {"BS": "Black Scholes",
                     "VG": "Variance Gamma",
                     "H": "Heston Model"}
 
 # Which options that needs to be evaluated 'Standard', 'Asian','Lookback'
-evaluate_options = [True, True, True]
+evaluate_options = [True, True, False]
 option_names = ["Standard", "Asian", "Lookback"]
 
 plot_mean = True
@@ -20,15 +20,23 @@ plot_min_max = False
 plot_percentile = True
 percentile = 2
 
+# restriction = ("paths", 15000, 20000)
+# restriction = ("time_step", 0, 500)
 restriction = None
 
 # column name from the csv file as the X-variable
-x_name = "paths"
-# x_name = "time_step"
+# x_name = "paths"
+x_name = "time_step"
 
 # column name from de csv file as Y-variable
 y_name = "option_price"
 y_label = "Price option"
+
+# accuracy_absolute,accuracy_normal,exact_value
+y_name_standard_BS = "accuracy_normal"
+# y_name_standard_BS = "accuracy_absolute"
+dict_y_label_standardBS = {"accuracy_normal": "Relative difference",
+                           "accuracy_absolute": "Absolute Relative difference"}
 
 dict_label_name = {"paths": "Number of paths",
                    "time_step": "Amount of steps per maturity"
@@ -37,7 +45,11 @@ x_label = dict_label_name[x_name]
 
 # Standard title of the plot, first the option type and then the Stock model
 title_plot = "Variance price {} option - {}"
+title_plot_standard_BS = "Performance Simulation vs Theory - {}"
 
+dict_title_restriction = {"paths": "-Paths=({},{})",
+                          "time_step": "-Steps=({},{})"
+                          }
 
 ########################################################################################################################
 def read_data(filename):
@@ -56,9 +68,10 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
     data_y = data[y_name]
 
     if restriction is not None:
-        data_y = data_y[restriction]
-        data_x = data_x[restriction]
+        data_y = data_y[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])]
+        data_x = data_x[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])]
 
+        title += dict_title_restriction[restriction[0]].format(restriction[1], restriction[2])
     unique_x = data_x.unique()
 
     if plot_min_max:
@@ -104,111 +117,28 @@ if any(evaluate_options) and any(evaluate_options):
                 file_name = get_filename(model, option)
                 data_options = read_data(file_name)
 
-                plot_change_variance(data_options,
-                                     x_name,
-                                     y_name,
-                                     title=title_plot.format(option, dict_model_names[model]),
-                                     xlabel=x_label,
-                                     ylabel=y_label,
-                                     plot_mean=plot_mean,
-                                     plot_min_max=plot_min_max,
-                                     plot_percentile=plot_percentile,
-                                     percentile=percentile,
-                                     restriction=restriction)
-
-# for data, title_name in zip(data_options, data_names):
-#     plot_change_variance(data, x_name, y_name, "Variance price {} option - BS".format(title_name), dict_label_name[x_name],
-#                          "Option price", plot_mean=True, plot_min_max=True)
-#
-# for data, title_name in zip(data_options, data_names):
-#     print("Plot onder 5000")
-#     plot_change_variance(data, x_name, y_name, "Variance price {} option - BS".format(title_name),
-#                          dict_label_name[x_name],
-#                          "Option price", plot_mean=True, plot_min_max=True, restriction=data["paths"] <= 5000)
-#
-#     print("Plot tussen 5000 en 10000")
-#     plot_change_variance(data, x_name, y_name, "Variance price {} option - BS".format(title_name),
-#                          dict_label_name[x_name],
-#                          "Option price", plot_mean=True, plot_min_max=True,
-#                          restriction=(data["paths"] > 5000) & (data["paths"] <= 10000))
-#
-#     print("Plot tussen 10000 en 15000")
-#     plot_change_variance(data, x_name, y_name, "Variance price {} option - BS".format(title_name),
-#                          dict_label_name[x_name],
-#                          "Option price", plot_mean=True, plot_min_max=True,
-#                          restriction=(data["paths"] > 10000) & (data["paths"] <= 15000))
-#
-#     print("Plot tussen 15000 en 20000")
-#     plot_change_variance(data, x_name, y_name, "Variance price {} option - BS".format(title_name),
-#                          dict_label_name[x_name],
-#                          "Option price", plot_mean=True, plot_min_max=True,
-#                          restriction=(data["paths"] > 15000) & (data["paths"] <= 20000))
-#
-# # print(data_asian["paths"] <= 5000)
-# # test_data = data_asian[y_name]
-# # test = test_data[data_asian["paths"] <= 5000]
-# # # print(test)
-#
-# ########################################################################################################################
-# # ------------------------------- Black Scholes -----------------------------------------------------------------------#
-# ########################################################################################################################
-# if evaluate_BS:
-#     filename = 'Datafiles/Test-steps and accuracy-BS-v1.csv'
-#     show_plots = True
-#
-#     data_bs = read_data(filename)
-#
-#     number_paths = data_bs['paths'].unique()
-#     step_sizes = data_bs['time_step'].unique()
-#
-#
-#     def plot_accuracy_graph(values, x_name, y_name, title, name_x_axis, name_y_axis,
-#                             fix_locations_name=None, fixed_value_locations=None):
-#         locations = [i for i in range(len(values[x_name]))]
-#         if fix_locations_name is not None:
-#             if fixed_value_locations is not None:
-#                 locations = data_bs[fix_locations_name] == fixed_value_locations
-#             else:
-#                 raise ValueError
-#
-#         x_values = values[x_name][locations]
-#         y_values = values[y_name][locations]
-#
-#         unique_x = x_values.unique()
-#         mean_y = []
-#         for x in unique_x:
-#             mean_y.append(np.mean(y_values[values[x_name] == x]))
-#
-#         plt.scatter(x_values, y_values)
-#         plt.xlabel(name_x_axis)
-#         plt.ylabel(name_y_axis)
-#         plt.title(title)
-#         plt.plot(unique_x, mean_y, color='red')
-#         plt.show()
-#
-#
-#     if show_plots:
-#         # Test function:
-#         plot_accuracy_graph(data_bs, "paths", "accuracy_normal", "Performance", "Number of paths",
-#                             "Relative Difference")
-#         plt.show()
-#
-#         plot_accuracy_graph(data_bs, "paths", "accuracy_absolute", "Performance", "Number of paths",
-#                             "Absolute Relative Difference")
-#         plt.show()
-#
-#         plot_accuracy_graph(data_bs, "time_step", "accuracy_absolute", "Performance", "Number of steps",
-#                             "Absolute Relative Difference")
-#         plt.show()
-#
-#         plot_accuracy_graph(data_bs, "time_step", "accuracy_normal", "Performance", "Number of steps",
-#                             "Relative Difference")
-#         plt.show()
-#
-#         plot_accuracy_graph(data_bs, "time_step", "time", "Time", "Number of steps",
-#                             "Time")
-#         plt.show()
-#
-#         plot_accuracy_graph(data_bs, "paths", "time", "Time", "Amount of paths",
-#                             "Time")
-#         plt.show()
+                # special case BS and Standard option
+                if model == "BS" and option == "Standard":
+                    plot_change_variance(data_options,
+                                         x_name,
+                                         y_name_standard_BS,
+                                         title=title_plot_standard_BS.format(dict_model_names[model]),
+                                         xlabel=x_label,
+                                         ylabel=dict_y_label_standardBS[y_name_standard_BS],
+                                         plot_mean=plot_mean,
+                                         plot_min_max=plot_min_max,
+                                         plot_percentile=plot_percentile,
+                                         percentile=percentile,
+                                         restriction=restriction)
+                else:
+                    plot_change_variance(data_options,
+                                         x_name,
+                                         y_name,
+                                         title=title_plot.format(option, dict_model_names[model]),
+                                         xlabel=x_label,
+                                         ylabel=y_label,
+                                         plot_mean=plot_mean,
+                                         plot_min_max=plot_min_max,
+                                         plot_percentile=plot_percentile,
+                                         percentile=percentile,
+                                         restriction=restriction)

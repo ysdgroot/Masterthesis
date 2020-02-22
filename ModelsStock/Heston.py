@@ -187,7 +187,7 @@ class HestonModel(StockModel):
         total_process = np.append(first_column_stock, total_process, axis=1)
         total_process *= start_price
 
-        return total_process, all_volatilities
+        return total_process
 
     def get_stock_prices_naive_simulation_v1(self, n_paths, start_price, maturity, steps_per_maturity=100, seed=None):
         """
@@ -310,9 +310,21 @@ class HestonModel(StockModel):
         :param seed:
         :return:
         """
+
         # todo: schrijven van documentatie
 
-        def conversion_and_check(value):
+        def conversion_and_check(value, positive_value=True):
+            """
+            Convert the values in tuples, so it makes it easier to use.
+            :param value: single value, tuple or list.
+                        A single value will be converted in a 2-tuple.
+                        In case it is a tuple/list with 3 or more values, only the first 2 elements will be used.
+            :param positive_value: boolean (default=True)
+                        True if the value must be a positive value
+                        False if it not necessary for a positive value
+            :return: a tuple in the correct format.
+                    If positive_value = True and if 'value' contains a negative number, a ValueError will be raised.
+            """
             # convert value into a tuple in increasing order.
             # control if the values are positive
             if len(value) == 1:
@@ -325,7 +337,7 @@ class HestonModel(StockModel):
                 raise TypeError
 
             # only 1 check is necessary, because this is the minimum.
-            if bounds[0] < 0:
+            if positive_value and bounds[0] < 0:
                 raise ValueError
             return bounds
 
@@ -342,14 +354,15 @@ class HestonModel(StockModel):
         long_variance_bound = conversion_and_check(long_variance_bound)
         rate_revert_to_long_bound = conversion_and_check(rate_revert_to_long_bound)
         vol_of_vol_bound = conversion_and_check(vol_of_vol_bound)
-        correlation_bound = conversion_and_check(correlation_bound)
+
+        correlation_bound = conversion_and_check(correlation_bound, positive_value=False)
 
         # Check if the maturity is an integer.
         if type(maturity_bound[0]) is not int or type(maturity_bound[1]) is not int:
             raise ValueError
 
         # Check if correlation is between -1 and 1
-        if correlation_bound[0] < -1 or correlation_bound[1]>1:
+        if correlation_bound[0] < -1 or correlation_bound[1] > 1:
             raise ValueError("Values of correlation must be between -1 and 1")
 
         # random Integer selection for the maturities
@@ -371,6 +384,7 @@ class HestonModel(StockModel):
         # making dictionary for each parameter
         data_dict = {"stock_price": stock_prices,
                      "strike_price": strike_prices,
+                     "strike_price_percent": strike_prices_percentage,
                      "interest_rate": interest_rates,
                      "maturity": maturities,
                      "start_vol": start_vols,

@@ -1,0 +1,16 @@
+# n_datapoints (per type)  : 10 
+# steps/maturity : 200 
+# n_paths/option : 15000 
+# Stock price : (90, 110) 
+# Strike price : (0.4, 1.6) 
+# Maturity : (1, 60) 
+# Interest rate : (0.01, 0.035) 
+# Start Volatility : (0.01, 0.1) 
+# Long term volatility : (0.01, 0.1) 
+# Rate of mean reversion : (1.4, 2.6) 
+# Volatility of volatility stock : (0.45, 0.75) 
+# Correlation (brownian motions) : (-0.85, -0.5) 
+# Seed values : 45 
+# Seed paths : 76 
+# Forward pricing : False 
+stock_price,strike_price,strike_price_percent,interest_rate,maturity,start_vol,long_term_vol,rate_reversion,vol_of_vol,correlation,call/put,opt_standard,opt_asianmean,opt_lookbackmin,opt_lookbackmax
