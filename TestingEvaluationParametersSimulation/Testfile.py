@@ -38,7 +38,6 @@ for step in step_sizes:
 
 def plot_accuracy_graph(values, accuracy_type, x_name, title, name_x_axis, name_y_axis,
                         fix_locations_name=None, fixed_value_locations=None):
-    # todo: maken van grafiek met een fixed value (bv path == 100)
     locations = [i for i in range(len(values[x_name]))]
     if fix_locations_name is not None:
         if fixed_value_locations is not None:

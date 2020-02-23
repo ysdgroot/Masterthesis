@@ -26,12 +26,6 @@ optimizer = None                # TODO: bekijken welke de beste zou zijn voor ti
 # 2) Werken met 1 layer network
 # 3) Cross-validation gebruiken voor het bepalen van hyperparameters (hoeveelheid neuronen en welke
 
-data = BS.get_random_data_and_solutions('C', 100, [80, 120], [0.01, 0.03], [0.01, 0.2], [0.25, 5], [70, 130])
-print('End new data')
-
-X = data.drop('Value_option', axis=1)
-y = data['Value_option']
-
 # Making the neural network (test-version)
 model = Sequential()
 model.add(Dense(units=64, activation='relu', input_dim=5))
@@ -39,11 +33,14 @@ model.add(Dense(units=1, activation='linear'))
 
 model.compile(loss='mean_squared_error', optimizer='adam')
 
+print(type(model))
+print(type(model) == Sequential)
+
 # start fitting the NN to the data
 
-model.fit(X, y, epochs=5, batch_size=32)
+# model.fit(X, y, epochs=5, batch_size=32)
 
-help(model)
+# help(model)
 
 # loss_and_metrics = model.evaluate(X, y)
 # print(loss_and_metrics)
@@ -59,19 +56,19 @@ help(model)
 #             'Volatility': vol, 'Maturity': mat}
 # data = pd.DataFrame(data=data_dict)
 
-data_test = BS.get_random_data_and_solutions('C', 1000, [90, 110], [0.01, 0.03], [0.01, 0.2], [0.25, 5], [80, 120])
-X_test = data_test.drop('Value_option', axis=1)
-y_test = data_test['Value_option']
+# data_test = BS.get_random_data_and_solutions('C', 1000, [90, 110], [0.01, 0.03], [0.01, 0.2], [0.25, 5], [80, 120])
+# X_test = data_test.drop('Value_option', axis=1)
+# y_test = data_test['Value_option']
+#
+# pred_y = model.predict(X_test)
 
-pred_y = model.predict(X_test)
-
-score = model.evaluate(X_test, y_test) # niet nodig, want het gebruikt al de mse als evaluatie
-print(score)
-
-mse = mean_squared_error(y_test, pred_y)
-print("Mean Squared Error:", mse)
-
-rmse = math.sqrt(mse)
-print("Root Mean Squared Error:", rmse)
-
-print(model.summary())
+# score = model.evaluate(X_test, y_test) # niet nodig, want het gebruikt al de mse als evaluatie
+# print(score)
+#
+# mse = mean_squared_error(y_test, pred_y)
+# print("Mean Squared Error:", mse)
+#
+# rmse = math.sqrt(mse)
+# print("Root Mean Squared Error:", rmse)
+#
+# print(model.summary())

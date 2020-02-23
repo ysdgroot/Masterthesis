@@ -153,8 +153,8 @@ class BlackScholes(StockModel):
                                   maturity_bound,
                                   interest_rate_bound,
                                   volatility_bound,
+                                  forward_pricing=False,
                                   seed=None):
-        # todo: het schrijven zodat het mogelijk is om een percentage van de forward price te nemen
         """
         Generation of random values for the Back Scholes model.
 
@@ -163,8 +163,10 @@ class BlackScholes(StockModel):
                                 Bounds where the values of the stock prices will be.
                                 The values will be uniformly selected.
         :param strike_price_bound: float, tuple or list; only the first 2 elements will be used.
-                                Bounds are the the strike prices, but are the percentages of the stock_price.
+                                Bounds are the the strike prices, but are the percentages(!) of the stock_price.
                                 The values will be uniformly selected.
+                                (!) If forward_pricing = True, then the strike_prices are the percentage
+                                    of the forward pricing (=e^(r*T)*S0)
         :param maturity_bound: int, tuple or list; only the first 2 elements will be used.
                                 Bounds where the values of the maturity will be.
                                 The values will be uniformly selected.
@@ -174,12 +176,17 @@ class BlackScholes(StockModel):
         :param volatility_bound: float, tuple or list; only the first 2 elements will be used.
                                 Bounds where the values of the volatility will be.
                                 The values will be uniformly selected.
+        :param forward_pricing: Boolean (default = False)
+                                If the strike_prices are the percentage of the forward pricing
+                                    instead of the (start) stock prices.
         :param seed: Positive integer or None. (default = None)
                     If value is different from None, the function np.random.seed(seed) will be called.
                     For replication purposes, to get same 'random' values.
         :return: dict, with keys: "interest_rate", "volatility", "maturity", "stock_price", "strike_price",
-                                "strike_price_percent".
-                For each key the values are a np.array of length 'amount' with the random values.
+                                "strike_price_percent", "forward_pricing"
+                For each key the values are a np.array of length 'amount' with the random values,
+                    but "forward_pricing" is True or False
+                        if the percentage of the forward pricing as strike price has been used or not.
         """
 
         def conversion_and_check(value):
@@ -223,8 +230,12 @@ class BlackScholes(StockModel):
         stock_prices = np.random.uniform(stock_price_bound[0], stock_price_bound[1], amount)
         strike_prices_percentage = np.random.uniform(strike_price_bound[0], strike_price_bound[1], amount)
 
-        # Take a percentage of the stock price
-        strike_prices = stock_prices * strike_prices_percentage
+        # Take a percentage of the stock price.
+        # If forward pricing, the strike price is the percentage of the forward price.
+        strike_prices = stock_prices * strike_prices_percentage if not forward_pricing \
+            else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentage
+
+        # todo test of het weldegelijk forward pricing neemt als het True/False is
 
         # making dictionary for each parameter
         data_dict = {"interest_rate": interest_rates,
@@ -232,7 +243,8 @@ class BlackScholes(StockModel):
                      "maturity": maturities,
                      "stock_price": stock_prices,
                      "strike_price": strike_prices,
-                     "strike_price_percent": strike_prices_percentage}
+                     "strike_price_percent": strike_prices_percentage,
+                     "forward_pricing": forward_pricing}
 
         return data_dict
 

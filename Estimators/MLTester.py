@@ -1,5 +1,5 @@
 from sklearn.model_selection import cross_val_score
-
+from keras.models import Sequential
 
 # TODO: controleer voor een mogelijk probleem met een NN, omdat het werkt met Keras en niet met sklearn
 def time_to_fit(regression_model, training_data, solutions_training_data):
@@ -13,6 +13,9 @@ def time_to_fit(regression_model, training_data, solutions_training_data):
     """
     import time
     # TODO: documentatie
+
+    if type(regression_model) == Sequential:
+        print("Het is een neuraal netwerk")
 
     start = time.time()
     model_fitted = regression_model.fit(training_data, solutions_training_data)

@@ -145,6 +145,7 @@ class VarianceGamma(StockModel):
                                   theta_bound,
                                   sigma_bound,
                                   nu_bound,
+                                  forward_pricing=False,
                                   seed=None):
         """
 

@@ -11,9 +11,9 @@ from datetime import datetime
 
 make_BS_data = False
 make_VG_data = False
-make_heston_data = True
+make_heston_data = False
 
-n_datapoints = 10
+n_datapoints = 10000
 
 steps_per_maturity = 200
 n_paths_optionpricing = 15000
@@ -56,7 +56,7 @@ def write_to_file_parallel(name_file, queue):
 def create_name_file(model, forward_pricing_bool):
     date_today = datetime.now().strftime('%d-%m-%Y')
     forward_bool = "(F)" if forward_pricing_bool else ""
-    name_file = "Generated Data - {} model - {}{}.csv".format(model, date_today, forward_bool)
+    name_file = "GeneratedData/Generated Data - {} model - {}{}.csv".format(model, date_today, forward_bool)
     return name_file
 
 
@@ -122,12 +122,11 @@ if make_BS_data:
     volatilities = random_values["volatility"]
     maturities = random_values["maturity"]
     stock_prices = random_values["stock_price"]
-    strike_prices_precentages = random_values["strike_price_percent"]
+    strike_prices_percentages = random_values["strike_price_percent"]
 
     # change the strike prices if we want to use the forward pricing
     strike_prices = random_values["strike_price"] if not forward_pricing_heston \
-        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_precentages
-
+        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentages
 
     # for parallelization
     def calculate_save_price_bs(position, queue):
@@ -137,7 +136,7 @@ if make_BS_data:
         vol = volatilities[position]
         start_price = stock_prices[position]
         strike_price = strike_prices[position]
-        strike_price_perc = strike_prices_precentages[position]
+        strike_price_perc = strike_prices_percentages[position]
         maturity = maturities[position]
 
         bs = BlackScholes(interest_rate, vol)
@@ -226,11 +225,11 @@ if make_VG_data:
     interest_rates = random_values["interest_rate"]
     maturities = random_values["maturity"]
     stock_prices = random_values["stock_price"]
-    strike_prices_precentages = random_values["strike_price_percent"]
+    strike_prices_percentages = random_values["strike_price_percent"]
 
     # change the strike prices if we want to use the forward pricing
     strike_prices = random_values["strike_price"] if not forward_pricing_heston \
-        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_precentages
+        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentages
 
     thetas = random_values["theta"]
     sigmas = random_values["sigma"]
@@ -251,7 +250,7 @@ if make_VG_data:
         start_price = stock_prices[position]
         maturity = maturities[position]
         strike_price = strike_prices[position]
-        strike_price_perc = strike_prices_precentages[position]
+        strike_price_perc = strike_prices_percentages[position]
 
         vg = VarianceGamma(interest_rate, theta, sigma, nu)
 
@@ -316,7 +315,6 @@ if make_heston_data:
                        "Seed values": seed_values,
                        "Seed paths": seed_paths,
                        "Forward pricing": forward_pricing_heston}
-    # todo toevoegen bounds van het heston model
 
     # setting column names for the csv-file
     column_names_values = ["stock_price", "strike_price", "strike_price_percent",
@@ -346,11 +344,11 @@ if make_heston_data:
     interest_rates = random_values["interest_rate"]
     maturities = random_values["maturity"]
     stock_prices = random_values["stock_price"]
-    strike_prices_precentages = random_values["strike_price_percent"]
+    strike_prices_percentages = random_values["strike_price_percent"]
 
     # change the strike prices if we want to use the forward pricing
     strike_prices = random_values["strike_price"] if not forward_pricing_heston \
-        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_precentages
+        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentages
 
     # values specific of the Heston Model
     start_vols = random_values["start_vol"]
@@ -362,7 +360,6 @@ if make_heston_data:
     # set seed
     np.random.seed(seed=seed_paths)
 
-
     # for parallelization
     # start collection datapoints
     def calculate_save_price_h(position, queue):
@@ -372,7 +369,7 @@ if make_heston_data:
         start_price = stock_prices[position]
         maturity = maturities[position]
         strike_price = strike_prices[position]
-        strike_price_perc = strike_prices_precentages[position]
+        strike_price_perc = strike_prices_percentages[position]
 
         start_vol = start_vols[position]
         long_variance = long_variances[position]

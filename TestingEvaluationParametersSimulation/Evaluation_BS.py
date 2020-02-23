@@ -50,6 +50,7 @@ dict_title_restriction = {"paths": "-Paths=({},{})",
                           "time_step": "-Steps=({},{})"
                           }
 
+
 ########################################################################################################################
 def read_data(filename):
     data = pd.read_csv(filename, header=0, comment='#')

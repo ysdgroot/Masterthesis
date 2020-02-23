@@ -8,7 +8,6 @@ def read_data(filename):
     return data
 
 
-# todo: plotten van percentile ipv min/max
 def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_max=False, plot_mean=False,
                          restriction=None):
     data_x = data[x_name]

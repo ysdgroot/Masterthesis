@@ -291,6 +291,7 @@ class HestonModel(StockModel):
                                   rate_revert_to_long_bound,
                                   vol_of_vol_bound,
                                   correlation_bound,
+                                  forward_pricing=False,
                                   seed=None):
 
         """

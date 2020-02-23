@@ -7,8 +7,6 @@ import csv
 import numpy as np
 from joblib import Parallel, delayed
 
-# TODO: verander de methoden, ze zijn allemaal afhankelijk van voorgaande parameterwaarden (global objects)
-
 # Testing paths
 time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 amount_paths = [i for i in range(1000, 20001, 1000)]

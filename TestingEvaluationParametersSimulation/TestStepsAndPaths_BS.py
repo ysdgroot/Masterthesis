@@ -7,9 +7,6 @@ import csv
 from joblib import Parallel, delayed
 import numpy as np
 
-# todo: probeer het probleem van het niet kunnen uitschrijven van de data in de file te vermijden.
-#           zorgt voor een verlies van toch een aantal datapunten, vooral de kleine snelle methoden.
-
 # Testing paths
 time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 amount_paths = [i for i in range(1000, 20001, 1000)]
