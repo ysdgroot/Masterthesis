@@ -65,7 +65,7 @@ class StockModel(ABC):
                                                                 maturity,
                                                                 interest_rate,
                                                                 option_type=opt_type,
-                                                                strike_price=strike_price)
+                                                                strike_price=strike_price)[0]
                                          for option_style in option_styles]
             return dict_values
         else:
@@ -74,6 +74,6 @@ class StockModel(ABC):
                                              maturity,
                                              interest_rate,
                                              option_type=option_type,
-                                             strike_price=strike_price)
+                                             strike_price=strike_price)[0]
                       for option_style in option_styles]
             return prices

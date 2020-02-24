@@ -38,6 +38,7 @@ class PlainVanilla(OptionStyle):
 
         :return: A positive value, which represents the price of the option at the moment (risk natural measure)
         """
+
         # This check need to be before 'Strike_price=None', otherwise there can be bugs when giving 'strike_price=None'
         # and 'strike_price_in_percent=True'
         if strike_price is not None and self.strike_price_in_percent:
@@ -56,4 +57,9 @@ class PlainVanilla(OptionStyle):
         stock_prices = stock_paths[:, -1]
 
         # the price under the risk natural measure
-        return math.e ** (-maturity * interest_rate) * np.mean(option_function(stock_prices, strike_price))
+        option_price = math.e ** (-maturity * interest_rate) * np.mean(option_function(stock_prices, strike_price))
+        # todo geef ook de variantie van de optie prijzen.
+        # Variance of the prices
+        var_option_pricing = np.var(math.e ** (-maturity * interest_rate) *
+                                    option_function(stock_prices, strike_price))
+        return option_price, var_option_pricing

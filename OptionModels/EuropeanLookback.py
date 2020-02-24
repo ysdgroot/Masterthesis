@@ -40,7 +40,7 @@ class Lookback(OptionStyle):
             :return: A positive value, which represents the price of the option.
             """
         # setting the correct values for the lookback option
-        prices_stock = stock_paths[:, -1]
+        stock_prices = stock_paths[:, -1]
         # if the lookback option uses the min or max
         strike_prices = np.min(stock_paths, axis=1) if self.lookback_min else np.max(stock_paths, axis=1)
 
@@ -50,4 +50,10 @@ class Lookback(OptionStyle):
             raise ValueError("Invalid option_type")
 
         # the price under the risk natural measure
-        return math.e ** (-maturity * interest_rate) * np.mean(option_function(prices_stock, strike_prices))
+        option_price = math.e ** (-maturity * interest_rate) * np.mean(option_function(stock_prices, strike_prices))
+        # todo geef ook de variantie van de optie prijzen.
+        # Variance of the prices
+        var_option_pricing = np.var(math.e ** (-maturity * interest_rate) *
+                                    option_function(stock_prices, strike_prices))
+
+        return option_price, var_option_pricing

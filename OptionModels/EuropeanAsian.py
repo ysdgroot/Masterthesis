@@ -57,7 +57,7 @@ class AsianMean(OptionStyle):
             strike_prices = np.mean(stock_paths, axis=1)
 
         # The values of each stock
-        prices_stock = stock_paths[:, -1]
+        stock_prices = stock_paths[:, -1]
 
         # check if the option_type is correct
         option_function = self.optiontype_dict.get(option_type)
@@ -65,4 +65,10 @@ class AsianMean(OptionStyle):
             raise ValueError("Invalid option_type")
 
         # the price under the risk natural measure
-        return math.e ** (-maturity * interest_rate) * np.mean(option_function(prices_stock, strike_prices))
+        option_price = math.e ** (-maturity * interest_rate) * np.mean(option_function(stock_prices, strike_prices))
+        # todo geef ook de variantie van de optie prijzen.
+        # Variance of the prices
+        var_option_pricing = np.var(math.e ** (-maturity * interest_rate) *
+                                    option_function(stock_prices, strike_prices))
+
+        return option_price, var_option_pricing
