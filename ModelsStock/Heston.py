@@ -142,7 +142,7 @@ class HestonModel(StockModel):
                                                                    self.correlation_processes,
                                                                    maturity,
                                                                    steps_per_maturity=steps_per_maturity)
-
+        # set names for the different processes.
         weiner_stock_processes = all_processes[:, 0, :]
         weiner_volatility_processes = all_processes[:, 1, :]
 
@@ -153,7 +153,7 @@ class HestonModel(StockModel):
 
         # function for each iteration per timestep
         def func_vol(position, step_size, volatilities, weiner_volatility):
-            # get last volatilities of each path
+            # get last volatility's of each path
             last_vol = volatilities[:, position]
             # set negative values to 0
             not_negative_vol = last_vol.copy()
@@ -164,14 +164,15 @@ class HestonModel(StockModel):
 
             return dnu
 
-        # lambda expression to get array of the volatilities for each path
+        # lambda expression to get array of the volatility's for each path
         array_f = lambda pos, step_size, vola, process: np.asarray(func_vol(pos, step_size, vola, process))
 
+        # Calculate simultaneously (all paths) the next step.
         for i in range(number_of_steps - 1):
             all_volatilities[:, i + 1] = all_volatilities[:, i] + array_f(i, dt, all_volatilities,
                                                                           weiner_volatility_processes)
 
-        # Because of the Euler scheme, it is possible to get negative values for Volatitlity.
+        # Because of the Euler scheme, it is possible to get negative values for Volatility.
         # This cause problems because the square root is taken for the volatility.
         all_volatilities[all_volatilities < 0] = 0
 
@@ -187,6 +188,8 @@ class HestonModel(StockModel):
         total_process = np.append(first_column_stock, total_process, axis=1)
         total_process *= start_price
 
+        # todo geef het volatiliteitsproces, en controleer de algemene methode van GeneralStockmodel,
+        #  want deze maakt gebruikt van deze functie. Daar mogen zeker geen problemen komen.
         return total_process
 
     def get_stock_prices_naive_simulation_v1(self, n_paths, start_price, maturity, steps_per_maturity=100, seed=None):
@@ -308,10 +311,10 @@ class HestonModel(StockModel):
         :param rate_revert_to_long_bound:
         :param vol_of_vol_bound:
         :param correlation_bound:
+        :param forward_pricing:
         :param seed:
         :return:
         """
-
         # todo: schrijven van documentatie
 
         def conversion_and_check(value, positive_value=True):
@@ -380,7 +383,8 @@ class HestonModel(StockModel):
         correlations = np.random.uniform(correlation_bound[0], correlation_bound[1], amount)
 
         # Take a percentage of the stock price
-        strike_prices = stock_prices * strike_prices_percentage
+        strike_prices = stock_prices * strike_prices_percentage if not forward_pricing \
+            else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentage
 
         # making dictionary for each parameter
         data_dict = {"stock_price": stock_prices,
@@ -392,46 +396,7 @@ class HestonModel(StockModel):
                      "long_variance": long_variances,
                      "rate_revert_to_long": rate_revert_to_longs,
                      "vol_of_vol": vol_of_vols,
-                     "correlation": correlations}
+                     "correlation": correlations,
+                     "forward_pricing": forward_pricing}
 
         return data_dict
-#
-# import matplotlib.pyplot as plt
-# from OptionModels.PlainVanilla import PlainVanilla
-# import time
-#
-# maturity = 1
-# interest_rate = 0.0319
-# start_vol = 0.010201
-# long_var = 0.019
-# rate_revert = 6.21
-# vol_of_vol = 0.61
-# correlation = -0.7
-#
-# start_price = 100
-# strike_price = 100
-#
-# # Construction object for the Heston model
-# heston = HestonModel(interest_rate, start_vol, long_var, rate_revert, vol_of_vol, correlation)
-#
-# n_paths = 10000
-# steps = 100
-# start = time.perf_counter()
-# model_first = heston.get_stock_prices(n_paths, 100, maturity, steps_per_maturity=steps)[0]
-# end = time.perf_counter()
-# # total_time += end - start
-# total_time_normal = end - start
-#
-# start = time.perf_counter()
-# model_second = heston.get_stock_prices_2(n_paths, 100, maturity, steps_per_maturity=steps)[0]
-# end = time.perf_counter()
-# total_time_new = end - start
-# # plt.plot(model)
-# # plt.show()
-#
-# option_standard = PlainVanilla()
-#
-# print(option_standard.get_price(model_first, maturity, interest_rate))
-# print("Time : {}".format(total_time_normal))
-# print(option_standard.get_price(model_second, maturity, interest_rate))
-# print("Time : {}".format(total_time_new))

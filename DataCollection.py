@@ -11,7 +11,7 @@ from datetime import datetime
 
 make_BS_data = False
 make_VG_data = False
-make_heston_data = False
+make_heston_data = True
 
 n_datapoints = 10000
 
@@ -34,7 +34,7 @@ def get_comment_line(name, value):
     :param value: obj, value(s) for the name
     :return: str, of the form " # 'name' : 'value' "
     """
-    return "# {} : {} \n".format(name, value)
+    return f"# {name} : {value} \n"
 
 
 def write_to_file(filename, list_values):
@@ -56,16 +56,15 @@ def write_to_file_parallel(name_file, queue):
 def create_name_file(model, forward_pricing_bool):
     date_today = datetime.now().strftime('%d-%m-%Y')
     forward_bool = "(F)" if forward_pricing_bool else ""
-    name_file = "GeneratedData/Generated Data - {} model - {}{}.csv".format(model, date_today, forward_bool)
-    return name_file
+    return f"GeneratedData/Generated Data - {model} model - {date_today}{forward_bool}.csv"
 
 
-def write_comments(name_file, general_info, data_boundaries):
+def write_comments(name_file, general_info, dict_data_boundaries):
     with open(name_file, 'w', newline='') as fd:
         for key, val in general_info.items():
             fd.write(get_comment_line(key, val))
 
-        for key, val in data_boundaries.items():
+        for key, val in dict_data_boundaries.items():
             fd.write(get_comment_line(key, val))
         # writing the header
         csv.writer(fd).writerow(col_names)
@@ -75,10 +74,10 @@ def write_comments(name_file, general_info, data_boundaries):
 # ------------------------------- Black Scholes -----------------------------------------------------------------------#
 ########################################################################################################################
 if make_BS_data:
-    forward_pricing_heston = False
+    forward_pricing_BS = False
     model_name = "BS"
 
-    file_name = create_name_file(model_name, forward_pricing_heston)
+    file_name = create_name_file(model_name, forward_pricing_BS)
 
     seed_values = 41
     seed_paths = 72
@@ -96,7 +95,7 @@ if make_BS_data:
                        "Volatility": volatility_bound,
                        "Seed values": seed_values,
                        "Seed paths": seed_paths,
-                       "Forward pricing": forward_pricing_heston}
+                       "Forward pricing": forward_pricing_BS}
 
     column_names_values = ["stock_price", "strike_price", "strike_price_percent",
                            "interest_rate", "volatility", "maturity", "call/put"]
@@ -115,6 +114,7 @@ if make_BS_data:
                                                            maturity_bound,
                                                            interest_rate_bound,
                                                            volatility_bound,
+                                                           forward_pricing=forward_pricing_BS,
                                                            seed=seed_values)
 
     # setting the values to a readable manner
@@ -124,13 +124,13 @@ if make_BS_data:
     stock_prices = random_values["stock_price"]
     strike_prices_percentages = random_values["strike_price_percent"]
 
-    # change the strike prices if we want to use the forward pricing
-    strike_prices = random_values["strike_price"] if not forward_pricing_heston \
-        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentages
+    # strike prices depends if usage of the forward pricing
+    strike_prices = random_values["strike_price"]
+
 
     # for parallelization
     def calculate_save_price_bs(position, queue):
-        print("BS Datapoint {}".format(position))
+        print(f"BS Datapoint {position}")
 
         interest_rate = interest_rates[position]
         vol = volatilities[position]
@@ -170,15 +170,15 @@ if make_BS_data:
 # ------------------------------- Variance Gamma ----------------------------------------------------------------------#
 ########################################################################################################################
 if make_VG_data:
-    forward_pricing_heston = False
+    forward_pricing_VG = False
     model_name = "VG"
 
-    file_name = create_name_file(model_name, forward_pricing_heston)
+    file_name = create_name_file(model_name, forward_pricing_VG)
     seed_values = 43
     seed_paths = 74
 
     # add 1 to seed to get other values  when using forward pricing. Not strictly necessary.
-    if forward_pricing_heston:
+    if forward_pricing_VG:
         seed_values += 1
         seed_paths += 1
 
@@ -187,7 +187,7 @@ if make_VG_data:
     strike_price_bound = (0.4, 1.6)
     interest_rate_bound = (0.01, 0.035)
     maturity_bound = (1, 60)
-    # volatility_bound = (0.01, 0.2)
+
     theta_bound = (-0.35, -0.05)
     sigma_bound = (0.05, 0.45)
     nu_bound = (0.55, 0.95)
@@ -201,7 +201,7 @@ if make_VG_data:
                        "Nu": nu_bound,
                        "Seed values": seed_values,
                        "Seed paths": seed_paths,
-                       "Forward pricing": forward_pricing_heston}
+                       "Forward pricing": forward_pricing_VG}
 
     column_names_values = ["stock_price", "strike_price", "strike_price_percent",
                            "interest_rate", "theta", "sigma", "nu", "maturity", "call/put"]
@@ -219,6 +219,7 @@ if make_VG_data:
                                                             theta_bound,
                                                             sigma_bound,
                                                             nu_bound,
+                                                            forward_pricing=forward_pricing_VG,
                                                             seed=seed_values)
 
     # setting the values to a readable manner
@@ -227,9 +228,8 @@ if make_VG_data:
     stock_prices = random_values["stock_price"]
     strike_prices_percentages = random_values["strike_price_percent"]
 
-    # change the strike prices if we want to use the forward pricing
-    strike_prices = random_values["strike_price"] if not forward_pricing_heston \
-        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentages
+    # strike prices depends if usage of the forward pricing
+    strike_prices = random_values["strike_price"]
 
     thetas = random_values["theta"]
     sigmas = random_values["sigma"]
@@ -238,10 +238,11 @@ if make_VG_data:
     # set seed
     np.random.seed(seed=seed_paths)
 
+
     # for parallelization
     # start collection datapoints
     def calculate_save_price_vg(position, queue):
-        print("VG Datapoint {}".format(position))
+        print(f"VG Datapoint {position}")
 
         interest_rate = interest_rates[position]
         theta = thetas[position]
@@ -279,7 +280,7 @@ if make_VG_data:
 # ------------------------------- Heston Model ------------------------------------------------------------------------#
 ########################################################################################################################
 if make_heston_data:
-    forward_pricing_heston = False
+    forward_pricing_heston = True
     model_name = "Heston"
 
     file_name = create_name_file(model_name, forward_pricing_heston)
@@ -296,6 +297,7 @@ if make_heston_data:
     strike_price_bound = (0.4, 1.6)
     interest_rate_bound = (0.01, 0.035)
     maturity_bound = (1, 60)
+
     start_volatility_bound = (0.01, 0.1)
     long_variance_bound = (0.01, 0.1)
     rate_revert_to_long_bound = (1.4, 2.6)
@@ -338,6 +340,7 @@ if make_heston_data:
                                                           rate_revert_to_long_bound,
                                                           vol_of_vol_bound,
                                                           correlation_bound,
+                                                          forward_pricing=forward_pricing_heston,
                                                           seed=seed_values)
 
     # setting the values to a readable manner
@@ -346,9 +349,8 @@ if make_heston_data:
     stock_prices = random_values["stock_price"]
     strike_prices_percentages = random_values["strike_price_percent"]
 
-    # change the strike prices if we want to use the forward pricing
-    strike_prices = random_values["strike_price"] if not forward_pricing_heston \
-        else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentages
+    # strike prices depends if usage of the forward pricing
+    strike_prices = random_values["strike_price"]
 
     # values specific of the Heston Model
     start_vols = random_values["start_vol"]
@@ -363,7 +365,7 @@ if make_heston_data:
     # for parallelization
     # start collection datapoints
     def calculate_save_price_h(position, queue):
-        print("Heston Datapoint {}".format(position))
+        print(f"Heston Datapoint {position}")
 
         interest_rate = interest_rates[position]
         start_price = stock_prices[position]
@@ -403,8 +405,9 @@ if make_heston_data:
         queue.put(values_call)
         queue.put(values_put)
 
-
 ########################################################################################################################
+
+
 def main_bs():
     manager = Manager()
     queue = manager.Queue()
