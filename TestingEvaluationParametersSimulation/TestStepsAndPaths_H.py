@@ -5,26 +5,26 @@ from OptionModels.EuropeanLookback import Lookback
 import time
 import csv
 import numpy as np
-from joblib import Parallel, delayed
+from multiprocessing import Manager, Pool
 
 # Testing paths
 # time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 # amount_paths = [i for i in range(1000, 20001, 1000)]
 
-time_steps_per_maturities = [i for i in range(100, 1001, 100)]
+time_steps_per_maturities = [j for j in range(5, 100, 5)] + [i for i in range(100, 1001, 100)]
 amount_paths = [i for i in range(1000, 20001, 1000)]
 
 write_header_to_files = [True, True, True]
 # write_header_to_files = [False, False, False]
-do_tests = [True, True, True]
+# do_tests = [True, True, True]
+do_tests = [False, False, False]
 
-# number_iterations = 50
-number_iterations = 25
+number_iterations = 50
 
 # The different file_name to write through
-file_name_standard = 'Datafiles/Test-steps and accuracy-H-v1.csv'
-file_name_asian = 'Datafiles/Test-steps and accuracy-H-v2-Asian.csv'
-file_name_lookback = 'Datafiles/Test-steps and accuracy-H-v3-Lookback.csv'
+file_name_standard = 'Datafiles/Test-steps and accuracy-H-v1-1.csv'
+file_name_asian = 'Datafiles/Test-steps and accuracy-H-v2-1-Asian.csv'
+file_name_lookback = 'Datafiles/Test-steps and accuracy-H-v3-1-Lookback.csv'
 
 file_names = [file_name_standard, file_name_asian, file_name_lookback]
 
@@ -50,9 +50,10 @@ option_lookback = Lookback()
 
 options = [option_standard, option_asian, option_lookback]
 option_names = ["Plainvanilla", "Asian", "Lookback"]
-
+dict_file_names = dict(zip(option_names, file_names))
 
 ########################################################################################################################
+
 
 def write_comment_info_and_header(file_n, option_name):
     col_names = ['time_step', 'paths', 'time', 'option_price', 'variance']
@@ -81,29 +82,58 @@ for bool_header, bool_test, file_name, option_name in zip(write_header_to_files,
         write_comment_info_and_header(file_name, option_name)
 
 
-def function_per_amount_paths(amount):
+def function_per_amount_paths(amount, queue):
     for time_step in time_steps_per_maturities:
-        print("Amount {}, timestep = {} ".format(amount, time_step))
+        print(f"Amount {amount}, timestep = {time_step} ")
 
         for i in range(number_iterations):
             start = time.perf_counter()
             paths = heston.get_stock_prices(amount, start_price, maturity, steps_per_maturity=time_step,
-                                            seed=42 + i)[0]
+                                            seed=42 + i)
             end = time.perf_counter()
             # total_time += end - start
             total_time = end - start
 
-            for bool_test, file_name, option in zip(do_tests, file_names, options):
+            for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
                 if bool_test:
-                    approx_call = option.get_price(paths, maturity, interest_rate, strike_price=strike_price)
-
-                    variance = np.var(paths[:, -1])
+                    approx_call, variance = option.get_price(paths, maturity, interest_rate, strike_price=strike_price)
 
                     temp_result = [time_step, amount, total_time, approx_call, variance]
-                    with open(file_name, 'a', newline='') as fd:
-                        csv.writer(fd).writerow(temp_result)
+
+                    queue.put((opt_name, temp_result))
 
 
-# only start test if a least 1 test needs to be done
-if sum(do_tests) != 0:
-    Parallel(n_jobs=4)(delayed(function_per_amount_paths)(amount) for amount in amount_paths)
+def write_to_file_parallel(queue):
+    while 1:
+        m = queue.get()
+        if m == 'kill':
+            break
+        name_file = dict_file_names[m[0]]
+        with open(name_file, 'a', newline='') as f:
+            csv.writer(f).writerow(m[1])
+            f.flush()
+
+
+def main_h():
+    manager = Manager()
+    queue = manager.Queue()
+    pool = Pool(5)
+
+    # start file writer in other pool
+    watcher = pool.apply_async(write_to_file_parallel, (queue,))
+    jobs = []
+    for j in amount_paths:
+        job = pool.apply_async(function_per_amount_paths, (j, queue))
+        jobs.append(job)
+
+    for job in jobs:
+        job.get()
+
+    queue.put('kill')
+    pool.close()
+    pool.join()
+
+
+if __name__ == "__main__":
+    print('Start')
+    main_h()

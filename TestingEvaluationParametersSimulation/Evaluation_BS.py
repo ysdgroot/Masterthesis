@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Which options that needs to be evaluated BS, VG, H
-evaluate_stock_model = [True, False, False]
+evaluate_stock_model = [False, False, False]
 model_names = ["BS", "VG", "H"]
 dict_model_names = {"BS": "Black Scholes",
                     "VG": "Variance Gamma",
                     "H": "Heston Model"}
 
 # Which options that needs to be evaluated 'Standard', 'Asian','Lookback'
-evaluate_options = [True, True, False]
+evaluate_options = [True, True, True]
 option_names = ["Standard", "Asian", "Lookback"]
 
 plot_mean = True
@@ -58,6 +58,8 @@ def read_data(filename):
 
 
 def get_filename(model, option_type):
+    # todo: files zijn verplaatst!!
+    print("Files zijn verplaatst!!")
     return 'Datafiles/Test-steps and accuracy-{}-{}.csv'.format(model, option_type)
 
 
@@ -70,6 +72,8 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
     if restriction is not None:
         data_y = data_y[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])]
         data_x = data_x[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])]
+
+        data = data[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])]
 
         title += dict_title_restriction[restriction[0]].format(restriction[1], restriction[2])
     unique_x = data_x.unique()
@@ -142,3 +146,35 @@ if any(evaluate_options) and any(evaluate_options):
                                          plot_percentile=plot_percentile,
                                          percentile=percentile,
                                          restriction=restriction)
+
+########################################################################################################################
+file_name = "Datafiles/Test-steps and accuracy-BS-v1-1.csv"
+file_name_2 = "Datafiles/BlackScholes/Test-steps and accuracy-BS-Standard.csv"
+data_options = read_data(file_name)
+data_options2 = read_data(file_name_2)
+
+new_data = data_options.append(data_options2)
+
+print(new_data)
+
+model = "BS"
+option = "Standard"
+# x_name = "paths"
+x_name = "time_step"
+# restriction = ("paths", 15000, 20000)
+#
+# restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
+
+restrictions = [("paths", i, i + 1000) for i in range(1000, 20000, 1000)]
+
+for restrict in restrictions:
+    plot_change_variance(new_data, x_name,
+                         y_name,
+                         title=title_plot.format(option, dict_model_names[model]),
+                         xlabel=x_label,
+                         ylabel=y_label,
+                         plot_mean=plot_mean,
+                         plot_min_max=plot_min_max,
+                         plot_percentile=False,
+                         percentile=percentile,
+                         restriction=restrict)
