@@ -204,7 +204,7 @@ if make_VG_data:
                        "Forward pricing": forward_pricing_VG}
 
     column_names_values = ["stock_price", "strike_price", "strike_price_percent",
-                           "interest_rate", "theta", "sigma", "nu", "maturity", "call/put"]
+                           "interest_rate", "skewness", "volatility", "kurtosis", "maturity", "call/put"]
 
     col_names = column_names_values + column_names_options
 
@@ -231,9 +231,9 @@ if make_VG_data:
     # strike prices depends if usage of the forward pricing
     strike_prices = random_values["strike_price"]
 
-    thetas = random_values["theta"]
-    sigmas = random_values["sigma"]
-    nus = random_values["nu"]
+    thetas = random_values["skewness"]
+    sigmas = random_values["volatility"]
+    nus = random_values["kurtosis"]
 
     # set seed
     np.random.seed(seed=seed_paths)
@@ -253,7 +253,7 @@ if make_VG_data:
         strike_price = strike_prices[position]
         strike_price_perc = strike_prices_percentages[position]
 
-        vg = VarianceGamma(interest_rate, theta, sigma, nu)
+        vg = VarianceGamma(interest_rate, sigma, theta, nu)
 
         # start simulation and calculation of the different options
         dict_option_values = vg.get_price_simulations(options,
@@ -354,7 +354,7 @@ if make_heston_data:
 
     # values specific of the Heston Model
     start_vols = random_values["start_vol"]
-    long_variances = random_values["long_variance"]
+    long_variances = random_values["long_volatility"]
     rate_reversions = random_values["rate_revert_to_long"]
     vol_of_vols = random_values["vol_of_vol"]
     correlations = random_values["correlation"]

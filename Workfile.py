@@ -150,14 +150,14 @@ print(data_test.shape)
 # Testing shapes of return stocks
 ######################################################################################################################
 
-# theta = 0.1
-# nu = 0.1
+# skewness = 0.1
+# kurtosis = 0.1
 # volatility = 0.1
 # interest_rate = 0.001
 # corr = 0.5
 # # bs = BlackScholes(interest_rate, volatility)
-# # vg = VarianceGamma(interest_rate, theta, volatility, nu)
-# heston = HestonModel(interest_rate, volatility, volatility, theta, volatility, corr)
+# # vg = VarianceGamma(interest_rate, skewness, volatility, kurtosis)
+# heston = HestonModel(interest_rate, volatility, volatility, skewness, volatility, corr)
 # 
 # amount = 1000
 # start_price = 100

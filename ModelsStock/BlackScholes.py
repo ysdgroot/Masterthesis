@@ -1,7 +1,6 @@
 from scipy.stats import norm
 import numpy as np
 from ModelsStock.GeneralStockModel import StockModel
-import matplotlib.pyplot as plt
 
 
 class BlackScholes(StockModel):
@@ -46,23 +45,25 @@ class BlackScholes(StockModel):
         if seed is not None:
             np.random.seed(seed=seed)
 
-        number_of_steps = maturity * steps_per_maturity  # the amount of timesteps needed for the stockprice
-        dt = 1 / steps_per_maturity  # length for each step, to make it discrete
+        # the amount of timesteps needed for the stockprice
+        number_of_steps = maturity * steps_per_maturity
+        # length for each step
+        dt = 1 / steps_per_maturity
 
-        # calculates a path of factors starting from start_price.
+        # calculates a path(process) of factors starting from start_price.
         # Each step is normal distributed with mean 0 and variance dt (length of a step)
-        weiner_processes = np.cumprod(1 + self.interest_rate * dt +
-                                      self.volatility * np.random.normal(0, np.sqrt(dt),
-                                                                         (amount_paths, number_of_steps)),
-                                      1) * start_price
+        # Because it is a process, i.e. based on the previous value, we take the product of the row ('cumprod(...,1)')
+        stock_process = np.cumprod(1 + self.interest_rate * dt +
+                                   self.volatility * np.random.normal(0, np.sqrt(dt),
+                                                                      (amount_paths, number_of_steps)), 1) * start_price
 
         # starting prices, for the first column
         first_column = np.ones((amount_paths, 1)) * start_price
 
         # adding start_price as first element
-        weiner_processes = np.append(first_column, weiner_processes, axis=1)
+        stock_process = np.append(first_column, stock_process, axis=1)
 
-        return weiner_processes
+        return stock_process
 
     @staticmethod
     def help_function(start_price, strike_price, maturity, interest_rate, volatility):
@@ -159,31 +160,34 @@ class BlackScholes(StockModel):
         Generation of random values for the Back Scholes model.
 
         :param amount: positive integer, number of random variables generated
-        :param stock_price_bound: float, tuple or list; only the first 2 elements will be used.
+        :param stock_price_bound: float, tuple or list; only the first 2 elements will be used. (positive values)
                                 Bounds where the values of the stock prices will be.
                                 The values will be uniformly selected.
-        :param strike_price_bound: float, tuple or list; only the first 2 elements will be used.
+        :param strike_price_bound: float, tuple or list; only the first 2 elements will be used. (positive values)
                                 Bounds are the the strike prices, but are the percentages(!) of the stock_price.
                                 The values will be uniformly selected.
                                 (!) If forward_pricing = True, then the strike_prices are the percentage
                                     of the forward pricing (=e^(r*T)*S0)
-        :param maturity_bound: int, tuple or list; only the first 2 elements will be used.
+        :param maturity_bound: int, tuple or list; only the first 2 elements will be used. (positive values)
                                 Bounds where the values of the maturity will be.
                                 The values will be uniformly selected.
-        :param interest_rate_bound: float, tuple or list; only the first 2 elements will be used.
+        :param interest_rate_bound: float, tuple or list; only the first 2 elements will be used. (positive values)
                                 Bounds where the values of the interest rate will be.
                                 The values will be uniformly selected.
-        :param volatility_bound: float, tuple or list; only the first 2 elements will be used.
+        :param volatility_bound: float, tuple or list; only the first 2 elements will be used. (positive values)
                                 Bounds where the values of the volatility will be.
                                 The values will be uniformly selected.
-        :param forward_pricing: Boolean (default = False)
-                                If the strike_prices are the percentage of the forward pricing
-                                    instead of the (start) stock prices.
+        :param forward_pricing: bool (default = False)
+                                True: the strike prices are based on the percentage of the forward pricing.
+                                False: the strike prices are based on the percentage of the start price of the stock.
         :param seed: Positive integer or None. (default = None)
                     If value is different from None, the function np.random.seed(seed) will be called.
                     For replication purposes, to get same 'random' values.
-        :return: dict, with keys: "interest_rate", "volatility", "maturity", "stock_price", "strike_price",
-                                "strike_price_percent", "forward_pricing"
+
+        :return: dict, with keys:
+                    "interest_rate", "volatility",   "maturity",
+                    "stock_price",   "strike_price", "strike_price_percent",
+                    "forward_pricing"
                 For each key the values are a np.array of length 'amount' with the random values,
                     but "forward_pricing" is True or False
                         if the percentage of the forward pricing as strike price has been used or not.
@@ -235,8 +239,6 @@ class BlackScholes(StockModel):
         strike_prices = stock_prices * strike_prices_percentage if not forward_pricing \
             else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentage
 
-        # todo test of het weldegelijk forward pricing neemt als het True/False is
-
         # making dictionary for each parameter
         data_dict = {"interest_rate": interest_rates,
                      "volatility": volatilities,
@@ -247,97 +249,3 @@ class BlackScholes(StockModel):
                      "forward_pricing": forward_pricing}
 
         return data_dict
-
-
-########################################################################################################################
-# import numpy.random as nprand
-# import pandas as pd
-#
-# def get_random_data(amount, price_bound, interest_rate_bound, volatility_bound, maturity_bound, strike_price_bound,
-#                     seed=113):
-#     """
-#
-#     :param amount:
-#     :param price_bound:
-#     :param interest_rate_bound:
-#     :param volatility_bound:
-#     :param maturity_bound:
-#     :param strike_price_bound:
-#     :param seed:
-#     :return:
-#     """
-#
-#     nprand.seed(seed)
-#
-#     def data_changer(obj):
-#         """
-#         Helpfunction to check if an obj has at least 2 elements (length != 1).
-#         If not it will return the object twice
-#         :param obj:
-#         :return:
-#         """
-#         value = obj
-#         if isinstance(obj, (int, float)) and not isinstance(obj, bool):
-#             value = (obj, obj)
-#         return value
-#
-#     # Make tuples of the data, if they are just values
-#     price_bound = data_changer(price_bound)
-#     interest_rate_bound = data_changer(interest_rate_bound)
-#     volatility_bound = data_changer(volatility_bound)
-#     maturity_bound = data_changer(maturity_bound)
-#     strike_price_bound = data_changer(strike_price_bound)
-#
-#     # Generate with the bounds random values that are uniformly distributed
-#     prices = nprand.uniform(price_bound[0], price_bound[1], amount)
-#     interest_rates = nprand.uniform(interest_rate_bound[0], interest_rate_bound[1], amount)
-#     volatilities = nprand.uniform(volatility_bound[0], volatility_bound[1], amount)
-#     maturities = nprand.uniform(maturity_bound[0], maturity_bound[1], amount)
-#     strike_prices = nprand.uniform(strike_price_bound[0], strike_price_bound[1], amount)
-#
-#     data_dict = {'Price': prices, 'Strike_price': strike_prices, 'Interest_rate': interest_rates,
-#             'Volatility': volatilities, 'Maturity': maturities}
-#     data = pd.DataFrame(data=data_dict)
-#
-#     # prices, interest_rates, volatilities, maturities, strike_prices
-#     return data
-#
-#
-# def get_random_solutions(option, prices, interest_rates, volatilities, maturities, strike_prices):
-#     if option == 'C':
-#         solution = BlackScholes.solution_call_option(prices, strike_prices, maturities, interest_rates, volatilities)
-#     else:
-#         solution = BlackScholes.solution_put_option(prices, strike_prices, maturities, interest_rates, volatilities)
-#
-#     return solution
-#
-# def get_random_data_and_solutions(option, amount, price_bound, interest_rate_bound, volatility_bound, maturity_bound,
-#                                   strike_price_bound, seed=113):
-#     """
-#
-#     :param option:
-#     :param amount:
-#     :param price_bound:
-#     :param interest_rate_bound:
-#     :param volatility_bound:
-#     :param maturity_bound:
-#     :param strike_price_bound:
-#     :param seed:
-#     :return:
-#     """
-#
-#
-#     data = get_random_data(amount, price_bound, interest_rate_bound, volatility_bound, maturity_bound,
-#                            strike_price_bound, seed=seed)
-#
-#     prices = data['Price']
-#     interest_rates = data['Interest_rate']
-#     volatilities = data['Volatility']
-#     maturities = data['Maturity']
-#     strike_prices = data['Strike_price']
-#
-#     results = get_random_solutions(option, prices, interest_rates, volatilities, maturities, strike_prices)
-#     data['Value_option'] = results
-#
-#     return data
-#

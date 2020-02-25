@@ -4,8 +4,6 @@ from OptionModels.EuropeanAsian import AsianMean
 from OptionModels.EuropeanLookback import Lookback
 import time
 import csv
-import numpy as np
-from joblib import Parallel, delayed
 from multiprocessing import Manager, Pool
 
 # Testing paths
@@ -31,14 +29,14 @@ file_names = [file_name_standard, file_name_asian, file_name_lookback]
 # The different file_name to write through
 maturity = 10
 interest_rate = 0.001
-sigma = 0.25
-nu = 0.75
-theta = -0.2
+sigma = 0.25  # volatitlity
+nu = 0.75  # kurtosis
+theta = -0.2  # skewness
 start_price = 100
 strike_price = 100
 
 # Construct object of Variance Gamma method
-VG = VarianceGamma(interest_rate, theta, sigma, nu)
+VG = VarianceGamma(interest_rate, sigma, theta, nu)
 
 # The different options types
 option_standard = PlainVanilla()

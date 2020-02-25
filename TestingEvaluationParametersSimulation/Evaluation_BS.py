@@ -7,7 +7,7 @@ evaluate_stock_model = [False, False, False]
 model_names = ["BS", "VG", "H"]
 dict_model_names = {"BS": "Black Scholes",
                     "VG": "Variance Gamma",
-                    "H": "Heston Model"}
+                    "H": "Heston"}
 
 # Which options that needs to be evaluated 'Standard', 'Asian','Lookback'
 evaluate_options = [True, True, True]
@@ -16,7 +16,7 @@ option_names = ["Standard", "Asian", "Lookback"]
 plot_mean = True
 plot_min_max = False
 
-plot_percentile = True
+plot_percentile = False
 percentile = 2
 
 # restriction = ("paths", 15000, 20000)
@@ -58,9 +58,8 @@ def read_data(filename):
 
 
 def get_filename(model, option_type):
-    # todo: files zijn verplaatst!!
-    print("Files zijn verplaatst!!")
-    return 'Datafiles/Test-steps and accuracy-{}-{}.csv'.format(model, option_type)
+    # todo: files zijn verplaatst!! TEST!!
+    return f'Datafiles/{dict_model_names[model]}/Test-steps and accuracy-{model}-{option_type}.csv'
 
 
 # todo toevoegen van een legende
@@ -148,8 +147,10 @@ if any(evaluate_options) and any(evaluate_options):
                                          restriction=restriction)
 
 ########################################################################################################################
+# TESTING ########################
+##################################
 file_name = "Datafiles/Test-steps and accuracy-BS-v1-1.csv"
-file_name_2 = "Datafiles/BlackScholes/Test-steps and accuracy-BS-Standard.csv"
+file_name_2 = "Datafiles/Black Scholes/Test-steps and accuracy-BS-Standard.csv"
 data_options = read_data(file_name)
 data_options2 = read_data(file_name_2)
 

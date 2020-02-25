@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+# todo: verwijderen van deze file
 
 def read_data(filename):
     data = pd.read_csv(filename, header=0, comment='#')

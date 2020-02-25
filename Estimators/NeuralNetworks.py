@@ -21,7 +21,7 @@ optimizer = None                # TODO: bekijken welke de beste zou zijn voor ti
 
 
 
-# TODO: nu testen om te werken met keras en hoe het precies werkt
+# TODO: kurtosis testen om te werken met keras en hoe het precies werkt
 # 1) Werken met een Multilayered Neural Network
 # 2) Werken met 1 layer network
 # 3) Cross-validation gebruiken voor het bepalen van hyperparameters (hoeveelheid neuronen en welke

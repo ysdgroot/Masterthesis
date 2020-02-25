@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+# TODO VERWIJDEREN VAN DEZE FILE!!!
+
 def read_data(filename):
     data = pd.read_csv(filename, header=0, comment='#')
     return data

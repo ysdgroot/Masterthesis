@@ -4,20 +4,28 @@ import numpy as np
 
 class VarianceGamma(StockModel):
 
-    # TODO: geef andere namen aan theta, sigma en nu, om een beter beeld te geven wat die betekenen.
-    def __init__(self, interest_rate, theta, sigma, nu):
+    # TODO: geef andere namen aan skewness, volatility en kurtosis, om een beter beeld te geven wat die betekenen.
+    def __init__(self, interest_rate, volatility, skewness, kurtosis):
         """
 
-        :param interest_rate:
-        :param theta:
-        :param sigma:
-        :param nu:
+        :param interest_rate:Positive float.
+                            The risk-free interest rate, per time maturity.
+        :param skewness: float.
+                    The implied skewness for the Variance Gamma process.
+        :param volatility: Positive float.
+                    The implied volatility for the Variance Gamma process.
+        :param kurtosis: Positive float.
+                    The implied kurtosis for the Variance Gamma process.
         """
-        # todo: documentatie (wat betekenen iedere variable precies)
+        print("Controleer op volgordes van de VG model, dit is aangepast!!")
         self.interest_rate = interest_rate
-        self.theta = theta
-        self.sigma = sigma
-        self.nu = nu
+        self.skewness = skewness
+        if volatility < 0:
+            raise ValueError("The volatility must be a positive value")
+        if kurtosis < 0:
+            raise ValueError("The kurtosis must be a positive value")
+        self.volatility = volatility
+        self.kurtosis = kurtosis
 
     def get_stock_prices(self, amount_paths, start_price, maturity, steps_per_maturity=100, seed=None):
         """
@@ -49,7 +57,7 @@ class VarianceGamma(StockModel):
         dt = 1 / steps_per_maturity
 
         # omega based on the article
-        omega = np.log(1 - self.theta * self.nu - self.nu * self.sigma ** 2 / 2) / self.nu
+        omega = np.log(1 - self.skewness * self.kurtosis - self.kurtosis * self.volatility ** 2 / 2) / self.kurtosis
 
         # the process based on the variance gamma model, each increment or decrement for each time_step
         # variance_process = self.variance_process(amount,
@@ -79,6 +87,8 @@ class VarianceGamma(StockModel):
         Creates a sequence of numbers that represents the Gamma Variance process based on 2 Variance Gamma processes
         This function is bit slower than the 'variance_process_brownian_motion' function
 
+        Based on the paper "Variance-Gamma and Monte Carlo" from Michael C. Fu
+
         :param amount_paths: Positive integer.
                             This is the total number of paths generated.
         :param maturity: Positive integer.
@@ -92,19 +102,22 @@ class VarianceGamma(StockModel):
                 shape:
                         (amount, maturity * time_step_per_maturity)
         """
-        # TODO: Geef referentie van document van waar het op gebaseerd is.
 
         number_of_steps = maturity * steps_per_maturity
         size_increments = 1 / steps_per_maturity
 
-        mu_plus = (np.sqrt(self.theta ** 2 + 2 * self.sigma ** 2 / self.nu) + self.theta) / 2
-        mu_min = (np.sqrt(self.theta ** 2 + 2 * self.sigma ** 2 / self.nu) - self.theta) / 2
+        # declaration of values for the gamma process. (Just for readability reason)
+        mu_plus = (np.sqrt(self.skewness ** 2 + 2 * self.volatility ** 2 / self.kurtosis) + self.skewness) / 2
+        mu_min = (np.sqrt(self.skewness ** 2 + 2 * self.volatility ** 2 / self.kurtosis) - self.skewness) / 2
 
-        gamma_process_plus = np.random.gamma(size_increments / self.nu, self.nu * mu_plus,
+        # Variance Gamma process is the difference of 2 Gamma processes
+        gamma_process_plus = np.random.gamma(size_increments / self.kurtosis, self.kurtosis * mu_plus,
                                              (number_of_steps, amount_paths))
-        gamma_process_min = np.random.gamma(size_increments / self.nu, self.nu * mu_min,
+        gamma_process_min = np.random.gamma(size_increments / self.kurtosis, self.kurtosis * mu_min,
                                             (number_of_steps, amount_paths))
 
+        # todo: draaien van het process
+        # verwijder transpose, verander axis=1, en verwissel n_steps en amount_paths
         return np.cumsum(gamma_process_plus - gamma_process_min, axis=0).transpose()
 
     def variance_process_brownian_motion(self, amount_paths, maturity=1, steps_per_maturity=100):
@@ -113,6 +126,8 @@ class VarianceGamma(StockModel):
         With a standard normal distribution in the process.
         This is a faster method than the process based on the difference of 2 gamma distributed sequences.
 
+        Based on the paper "Variance-Gamma and Monte Carlo" from Michael C. Fu
+
         :param amount_paths: Positive integer.
                             This is the total number of paths generated.
         :param maturity: Positive integer.
@@ -126,14 +141,14 @@ class VarianceGamma(StockModel):
                 shape:
                         (amount, maturity * time_step_per_maturity)
         """
-
         number_of_steps = maturity * steps_per_maturity
         size_increments = 1 / steps_per_maturity
 
-        gamma_process = np.random.gamma(size_increments / self.nu, self.nu, (number_of_steps, amount_paths))
+        # Variance Gamma process which is based on a Brownian motion
+        gamma_process = np.random.gamma(size_increments / self.kurtosis, self.kurtosis, (number_of_steps, amount_paths))
         brownian_motion = np.random.randn(number_of_steps, amount_paths)
 
-        return np.cumsum(self.theta * gamma_process + self.sigma * np.sqrt(gamma_process) * brownian_motion,
+        return np.cumsum(self.skewness * gamma_process + self.volatility * np.sqrt(gamma_process) * brownian_motion,
                          axis=0).transpose()
 
     @staticmethod
@@ -163,6 +178,17 @@ class VarianceGamma(StockModel):
         # todo: schrijven van documentatie
 
         def conversion_and_check(value, check_positive=True):
+            """
+            Convert the values in tuples, so it makes it easier to use.
+            :param value: single value, tuple or list.
+                        A single value will be converted in a 2-tuple.
+                        In case it is a tuple/list with 3 or more values, only the first 2 elements will be used.
+            :param check_positive: boolean (default=True)
+                        True if the value must be a positive value
+                        False if it not necessary for a positive value
+            :return: a tuple in the correct format.
+                    If positive_value = True and if 'value' contains a negative number, a ValueError will be raised.
+            """
             # convert value into a tuple in increasing order.
             # control if the values are positive
             if len(value) == 1:
@@ -175,9 +201,8 @@ class VarianceGamma(StockModel):
                 raise TypeError
 
             # only 1 check is necessary, because this is the minimum.
-            if check_positive:
-                if bounds[0] < 0:
-                    raise ValueError
+            if check_positive and bounds[0] < 0:
+                raise ValueError
             return bounds
 
         # set seed
@@ -209,7 +234,8 @@ class VarianceGamma(StockModel):
         nus = np.random.uniform(nu_bound[0], nu_bound[1], amount)
 
         # Take a percentage of the stock price
-        strike_prices = stock_prices * strike_prices_percentage
+        strike_prices = stock_prices * strike_prices_percentage if not forward_pricing \
+            else stock_prices * np.exp(interest_rates * maturities) * strike_prices_percentage
 
         # Making dictionary for each parameter
         data_dict = {"stock_price": stock_prices,
@@ -217,8 +243,9 @@ class VarianceGamma(StockModel):
                      "interest_rate": interest_rates,
                      "strike_price_percent": strike_prices_percentage,
                      "maturity": maturities,
-                     "theta": thetas,
-                     "sigma": sigmas,
-                     "nu": nus}
+                     "skewness": thetas,
+                     "volatility": sigmas,
+                     "kurtosis": nus,
+                     "forward_pricing": forward_pricing}
 
         return data_dict
