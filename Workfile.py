@@ -18,9 +18,13 @@ from sklearn.ensemble import RandomForestRegressor
 import math
 from sklearn.metrics import mean_squared_error
 
-data_test = pd.read_csv("GeneratedData/Generated Data - BS model - 17_2_20.csv", header=0, comment='#')
+data_test = pd.read_csv("GeneratedData/BS model.csv", header=0, comment='#')
+col_names_X = ["stock_price", "strike_price", "interest_rate", "volatility", "maturity", "call/put"]
 
-print(data_test.shape)
+test = data_test[col_names_X]
+print(test.dtypes)
+
+print(test)
 
 # option = AsianMean(1)
 # # stock_paths = np.array([[1, 2, 2, 1, 3, 2, 4, 5], [0, 1, 1, 0, 1, 2, 1, 0]])

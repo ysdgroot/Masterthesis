@@ -68,3 +68,7 @@ class OptionStyle(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_prices_paths(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
+        raise NotImplementedError
+        pass

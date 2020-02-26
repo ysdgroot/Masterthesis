@@ -47,6 +47,7 @@ class StockModel(ABC):
             If option_type is list (=['C','P']), then it is a dict with keys 'C' and 'P',
                 with resp. the prices of the options.
         """
+        # todo: kijken om dit op te splitsen in een kleiner aantal paden, om minder RAM te gebruiken
         # Generation of all the paths.
         simulations = self.get_stock_prices(amount_paths,
                                             start_price,

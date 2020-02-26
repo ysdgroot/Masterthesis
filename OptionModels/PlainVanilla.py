@@ -63,3 +63,7 @@ class PlainVanilla(OptionStyle):
         var_option_pricing = np.var(math.e ** (-maturity * interest_rate) *
                                     option_function(stock_prices, strike_price))
         return option_price, var_option_pricing
+
+    # todo schrijf een functie die de prijs geeft van exact 1 pad, dit kan dan gebruikt worden om hiermee RAM geheugen te verlagen
+    def get_prices_paths(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
+        raise NotImplementedError

@@ -16,8 +16,8 @@ option_names = ["Standard", "Asian", "Lookback"]
 plot_mean = True
 plot_min_max = False
 
-plot_percentile = False
-percentile = 2
+plot_percentile = True
+percentile = 1
 
 # restriction = ("paths", 15000, 20000)
 # restriction = ("time_step", 0, 500)
@@ -64,18 +64,20 @@ def get_filename(model, option_type):
 
 # todo toevoegen van een legende
 def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_max=False, plot_mean=False,
-                         restriction=None, plot_percentile=False, percentile=2):
+                         restriction=None, plot_percentile=False, percentile=1):
     data_x = data[x_name]
     data_y = data[y_name]
+
+    unique_x = data_x.unique()
 
     if restriction is not None:
         data_y = data_y[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])]
         data_x = data_x[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])]
 
+        # resiction of the data for later use; otherwise there will be indexing problems.
         data = data[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])]
 
         title += dict_title_restriction[restriction[0]].format(restriction[1], restriction[2])
-    unique_x = data_x.unique()
 
     if plot_min_max:
         min_line = []
@@ -101,8 +103,15 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
         for x in unique_x:
             mean_line.append(np.mean(data_y[data[x_name] == x]))
         plt.plot(unique_x, mean_line, color='red')
+    # todo deze stuk code verwijderen
+    restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
+    # restrictions = [("paths", i, i + 1000) for i in range(1000, 20000, 1000)]
 
-    plt.scatter(data_x, data_y)
+    for restriction in restrictions:
+        plt.scatter(data_x[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])],
+                    data_y[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])])
+
+    # plt.scatter(data_x, data_y)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -149,33 +158,51 @@ if any(evaluate_options) and any(evaluate_options):
 ########################################################################################################################
 # TESTING ########################
 ##################################
-file_name = "Datafiles/Test-steps and accuracy-BS-v1-1.csv"
-file_name_2 = "Datafiles/Black Scholes/Test-steps and accuracy-BS-Standard.csv"
+model = "VG"
+option = "Lookback"
+
+file_name = "Datafiles/Test-steps and accuracy-VG-v3-1-Lookback.csv"
+file_name_2 = get_filename(model, option)
+
 data_options = read_data(file_name)
 data_options2 = read_data(file_name_2)
 
-new_data = data_options.append(data_options2)
+# new_data = data_options.append(data_options2)
+new_data = data_options
 
 print(new_data)
 
-model = "BS"
-option = "Standard"
 # x_name = "paths"
 x_name = "time_step"
 # restriction = ("paths", 15000, 20000)
 #
 # restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
 
-restrictions = [("paths", i, i + 1000) for i in range(1000, 20000, 1000)]
+# y_name = "variance"
 
-for restrict in restrictions:
-    plot_change_variance(new_data, x_name,
-                         y_name,
-                         title=title_plot.format(option, dict_model_names[model]),
-                         xlabel=x_label,
-                         ylabel=y_label,
-                         plot_mean=plot_mean,
-                         plot_min_max=plot_min_max,
-                         plot_percentile=False,
-                         percentile=percentile,
-                         restriction=restrict)
+restriction = ("time_step", 5, 200)
+
+plot_change_variance(new_data, x_name,
+                     y_name,
+                     title=title_plot.format(option, dict_model_names[model]),
+                     xlabel=x_label,
+                     ylabel=y_label,
+                     plot_mean=plot_mean,
+                     plot_min_max=plot_min_max,
+                     plot_percentile=False,
+                     percentile=percentile,
+                     restriction=restriction)
+
+# restrictions = [("paths", 1000, 5000)] + [("paths", i, i + 5000) for i in range(5000, 20000, 5000)]
+#
+# for restrict in restrictions:
+#     plot_change_variance(new_data, x_name,
+#                          y_name,
+#                          title=title_plot.format(option, dict_model_names[model]),
+#                          xlabel=x_label,
+#                          ylabel=y_label,
+#                          plot_mean=plot_mean,
+#                          plot_min_max=plot_min_max,
+#                          plot_percentile=True,
+#                          percentile=0,
+#                          restriction=restrict)

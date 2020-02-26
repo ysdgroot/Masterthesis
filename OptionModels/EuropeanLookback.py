@@ -57,3 +57,7 @@ class Lookback(OptionStyle):
                                     option_function(stock_prices, strike_prices))
 
         return option_price, var_option_pricing
+
+    def get_prices_paths(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
+        raise NotImplementedError
+    # todo dit schrijven

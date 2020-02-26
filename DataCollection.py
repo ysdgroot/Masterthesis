@@ -9,14 +9,14 @@ import numpy as np
 import csv
 from datetime import datetime
 
-make_BS_data = False
+make_BS_data = True
 make_VG_data = False
-make_heston_data = True
+make_heston_data = False
 
 n_datapoints = 10000
 
-steps_per_maturity = 200
-n_paths_optionpricing = 15000
+steps_per_maturity = 100
+n_paths_optionpricing = 10000
 
 dict_general_info = {'n_datapoints (per type) ': n_datapoints,
                      'steps/maturity': steps_per_maturity,
@@ -79,12 +79,12 @@ if make_BS_data:
 
     file_name = create_name_file(model_name, forward_pricing_BS)
 
-    seed_values = 41
-    seed_paths = 72
+    seed_values = 4
+    seed_paths = 7
 
     stock_price_bound = (90, 110)
     strike_price_bound = (0.4, 1.6)
-    interest_rate_bound = (0.01, 0.035)
+    interest_rate_bound = (0.001, 0.035)
     maturity_bound = (1, 60)
     volatility_bound = (0.01, 0.2)
 
