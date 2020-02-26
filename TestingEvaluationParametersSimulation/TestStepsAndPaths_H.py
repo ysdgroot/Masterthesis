@@ -7,6 +7,7 @@ import csv
 import numpy as np
 from multiprocessing import Manager, Pool
 
+
 # Testing paths
 # time_steps_per_maturities = [i for i in range(100, 1001, 100)]
 # amount_paths = [i for i in range(1000, 20001, 1000)]
@@ -60,17 +61,17 @@ def write_comment_info_and_header(file_n, option_name):
 
     with open(file_n, 'w', newline='') as fd:
         fd.write("# Heston model \n")
-        fd.write('# Maturity = {} \n'.format(maturity))
-        fd.write('# Interest_rate = {} \n'.format(interest_rate))
-        fd.write("# Start_vol = {} \n".format(start_vol))
-        fd.write("# long variance = {} \n".format(long_var))
-        fd.write("# Rate mean reversion = {} \n".format(rate_revert))
-        fd.write("# Volatility of vol = {} \n".format(vol_of_vol))
-        fd.write("# Correlation = {} \n".format(correlation))
-        fd.write("# Start_price = {} \n".format(start_price))
-        fd.write("# Strike_price = {} \n".format(strike_price))
-        fd.write("# Option = {} \n".format(option_name))
-        fd.write("# Number of iterations = {} \n".format(number_iterations))
+        fd.write(f'# Maturity = {maturity} \n')
+        fd.write(f'# Interest_rate = {interest_rate} \n')
+        fd.write(f"# Start_vol = {start_vol} \n")
+        fd.write(f"# long variance = {long_var} \n")
+        fd.write(f"# Rate mean reversion = {rate_revert} \n")
+        fd.write(f"# Volatility of vol = {vol_of_vol} \n")
+        fd.write(f"# Correlation = {correlation} \n")
+        fd.write(f"# Start_price = {start_price} \n")
+        fd.write(f"# Strike_price = {strike_price} \n")
+        fd.write(f"# Option = {option_name} \n")
+        fd.write(f"# Number of iterations = {number_iterations} \n")
 
         # write the header
         csv.writer(fd).writerow(col_names)
@@ -101,6 +102,7 @@ def function_per_amount_paths(amount, queue):
                     temp_result = [time_step, amount, total_time, approx_call, variance]
 
                     queue.put((opt_name, temp_result))
+    print(f"End {amount}")
 
 
 def write_to_file_parallel(queue):

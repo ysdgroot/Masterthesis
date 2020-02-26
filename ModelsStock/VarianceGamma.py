@@ -4,19 +4,19 @@ import numpy as np
 
 class VarianceGamma(StockModel):
 
-    # TODO: geef andere namen aan skewness, volatility en kurtosis, om een beter beeld te geven wat die betekenen.
     def __init__(self, interest_rate, volatility, skewness, kurtosis):
         """
 
         :param interest_rate:Positive float.
                             The risk-free interest rate, per time maturity.
-        :param skewness: float.
+        :param skewness: (parameter 'theta') float.
                     The implied skewness for the Variance Gamma process.
-        :param volatility: Positive float.
+        :param volatility: (parameter 'sigma') Positive float.
                     The implied volatility for the Variance Gamma process.
-        :param kurtosis: Positive float.
+        :param kurtosis: (parameter 'nu') Positive float.
                     The implied kurtosis for the Variance Gamma process.
         """
+        # todo controleer op volgordes
         print("Controleer op volgordes van de VG model, dit is aangepast!!")
         self.interest_rate = interest_rate
         self.skewness = skewness
@@ -30,6 +30,7 @@ class VarianceGamma(StockModel):
     def get_stock_prices(self, amount_paths, start_price, maturity, steps_per_maturity=100, seed=None):
         """
         Simulations of stock prices based on the Variance Gamma model.
+        # todo geef referentie voor meer uitleg erover
 
         :param amount_paths: Positive integer.
                             This is the total number of paths generated.
@@ -112,13 +113,11 @@ class VarianceGamma(StockModel):
 
         # Variance Gamma process is the difference of 2 Gamma processes
         gamma_process_plus = np.random.gamma(size_increments / self.kurtosis, self.kurtosis * mu_plus,
-                                             (number_of_steps, amount_paths))
+                                             (amount_paths, number_of_steps))
         gamma_process_min = np.random.gamma(size_increments / self.kurtosis, self.kurtosis * mu_min,
-                                            (number_of_steps, amount_paths))
+                                            (amount_paths, number_of_steps))
 
-        # todo: draaien van het process
-        # verwijder transpose, verander axis=1, en verwissel n_steps en amount_paths
-        return np.cumsum(gamma_process_plus - gamma_process_min, axis=0).transpose()
+        return np.cumsum(gamma_process_plus - gamma_process_min, axis=1)
 
     def variance_process_brownian_motion(self, amount_paths, maturity=1, steps_per_maturity=100):
         """
@@ -145,11 +144,11 @@ class VarianceGamma(StockModel):
         size_increments = 1 / steps_per_maturity
 
         # Variance Gamma process which is based on a Brownian motion
-        gamma_process = np.random.gamma(size_increments / self.kurtosis, self.kurtosis, (number_of_steps, amount_paths))
-        brownian_motion = np.random.randn(number_of_steps, amount_paths)
+        gamma_process = np.random.gamma(size_increments / self.kurtosis, self.kurtosis, (amount_paths, number_of_steps))
+        brownian_motion = np.random.randn(amount_paths, number_of_steps)
 
         return np.cumsum(self.skewness * gamma_process + self.volatility * np.sqrt(gamma_process) * brownian_motion,
-                         axis=0).transpose()
+                         axis=1)
 
     @staticmethod
     def generate_random_variables(amount,
@@ -157,25 +156,65 @@ class VarianceGamma(StockModel):
                                   strike_price_bound,
                                   maturity_bound,
                                   interest_rate_bound,
-                                  theta_bound,
-                                  sigma_bound,
-                                  nu_bound,
+                                  skewness_bound,
+                                  volatility_bound,
+                                  kurtosis_bound,
                                   forward_pricing=False,
                                   seed=None):
         """
 
-        :param amount:
-        :param stock_price_bound:
-        :param strike_price_bound:
-        :param maturity_bound:
-        :param interest_rate_bound:
-        :param theta_bound:
-        :param sigma_bound:
-        :param nu_bound:
-        :param seed:
-        :return:
+        The generation of random variables for the Variance Gamma model.
+
+        :param amount: A positive integer.
+                        The amount of different values, of each parameter.
+        :param stock_price_bound: float, tuple or list; only the first 2 elements will be used. (positive values)
+                                Bounds where the values of the stock prices will be.
+                                The values will be uniformly selected.
+        :param strike_price_bound: float, tuple or list; only the first 2 elements will be used. (positive values)
+                                Bounds are the the strike prices, but are the percentages(!) of the stock_price.
+                                The values will be uniformly selected.
+                                (!) If forward_pricing = True, then the strike_prices are the percentage
+                                    of the forward pricing (=e^(r*T)*S0)
+        :param maturity_bound: int, tuple or list; only the first 2 elements will be used. (positive values)
+                                Bounds where the values of the maturity will be.
+                                The values will be uniformly selected. (uniformly over the int)
+        :param interest_rate_bound: float, tuple or list; only the first 2 elements will be used. (positive values)
+                                Bounds where the values of the interest rate will be.
+                                The values will be uniformly selected.
+        :param skewness_bound: float, tuple or list; only the first 2 elements will be used.
+                                Bounds where the values of the skewness will be.
+                                The values will be uniformly selected.
+        :param volatility_bound:float, tuple or list; only the first 2 elements will be used. (positive values)
+                                Bounds where the values of the start volatility will be.
+                                The values will be uniformly selected.
+        :param kurtosis_bound:float, tuple or list; only the first 2 elements will be used. (positive values)
+                                Bounds where the values of the kurtosis will be.
+                                The values will be uniformly selected.
+        :param forward_pricing: bool (default = False)
+                                True: the strike prices are based on the percentage of the forward pricing.
+                                False: the strike prices are based on the percentage of the start price of the stock.
+        :param seed: Positive integer or None. (default = None)
+                    If value is different from None, the function np.random.seed(seed) will be called.
+                    For replication purposes, to get same 'random' values.
+
+        "stock_price": stock_prices,
+                     "strike_price": strike_prices,
+                     "interest_rate": interest_rates,
+                     "strike_price_percent": strike_prices_percentage,
+                     "maturity": maturities,
+                     "skewness": skewness,
+                     "volatility": volatilities,
+                     "kurtosis": kurtosis,
+                     "forward_pricing": forward_pricing}
+
+        :return:dict with keys
+                    "stock_price", "strike_price", "strike_price_percent", "interest_rate",
+                    "maturity",    "skewness",      "volatility",           "kurtosis",
+                    "forward_pricing"
+                For each key the values are a np.array of length 'amount' with the random values,
+                    but "forward_pricing" is True or False
+                        if the percentage of the forward pricing as strike price has been used or not.
         """
-        # todo: schrijven van documentatie
 
         def conversion_and_check(value, check_positive=True):
             """
@@ -214,9 +253,9 @@ class VarianceGamma(StockModel):
         strike_price_bound = conversion_and_check(strike_price_bound)
         maturity_bound = conversion_and_check(maturity_bound)
         interest_rate_bound = conversion_and_check(interest_rate_bound)
-        theta_bound = conversion_and_check(theta_bound, check_positive=False)
-        sigma_bound = conversion_and_check(sigma_bound)
-        nu_bound = conversion_and_check(nu_bound)
+        skewness_bound = conversion_and_check(skewness_bound, check_positive=False)
+        volatility_bound = conversion_and_check(volatility_bound)
+        kurtosis_bound = conversion_and_check(kurtosis_bound)
 
         # Check if the maturity is an integer.
         if type(maturity_bound[0]) is not int or type(maturity_bound[1]) is not int:
@@ -229,9 +268,9 @@ class VarianceGamma(StockModel):
         stock_prices = np.random.uniform(stock_price_bound[0], stock_price_bound[1], amount)
         strike_prices_percentage = np.random.uniform(strike_price_bound[0], strike_price_bound[1], amount)
         interest_rates = np.random.uniform(interest_rate_bound[0], interest_rate_bound[1], amount)
-        thetas = np.random.uniform(theta_bound[0], theta_bound[1], amount)
-        sigmas = np.random.uniform(sigma_bound[0], sigma_bound[1], amount)
-        nus = np.random.uniform(nu_bound[0], nu_bound[1], amount)
+        skewness = np.random.uniform(skewness_bound[0], skewness_bound[1], amount)
+        volatilities = np.random.uniform(volatility_bound[0], volatility_bound[1], amount)
+        kurtosis = np.random.uniform(kurtosis_bound[0], kurtosis_bound[1], amount)
 
         # Take a percentage of the stock price
         strike_prices = stock_prices * strike_prices_percentage if not forward_pricing \
@@ -243,9 +282,9 @@ class VarianceGamma(StockModel):
                      "interest_rate": interest_rates,
                      "strike_price_percent": strike_prices_percentage,
                      "maturity": maturities,
-                     "skewness": thetas,
-                     "volatility": sigmas,
-                     "kurtosis": nus,
+                     "skewness": skewness,
+                     "volatility": volatilities,
+                     "kurtosis": kurtosis,
                      "forward_pricing": forward_pricing}
 
         return data_dict

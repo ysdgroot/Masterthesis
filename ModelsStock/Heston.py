@@ -114,8 +114,6 @@ class HestonModel(StockModel):
         total_process = np.append(first_column_stock, total_process, axis=1)
         total_process *= start_price
 
-        # todo geef het volatiliteitsproces, en controleer de algemene methode van GeneralStockmodel,
-        #  want deze maakt gebruikt van deze functie. Daar mogen zeker geen problemen komen.
         return total_process
 
     def get_stock_prices_v2(self, n_paths, start_price, maturity, steps_per_maturity=100, seed=None):

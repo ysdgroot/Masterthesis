@@ -14,8 +14,8 @@ time_steps_per_maturities = [j for j in range(5, 100, 5)] + [i for i in range(10
 
 write_header_to_files = [True, True, True]
 # if the tests needs to be done, in order 'Standard, Asian, Lookback'
-# do_tests = [False, False, False]
-do_tests = [True, True, True]
+do_tests = [False, False, False]
+# do_tests = [True, True, True]
 
 number_iterations = 50
 
@@ -29,14 +29,17 @@ file_names = [file_name_standard, file_name_asian, file_name_lookback]
 # The different file_name to write through
 maturity = 10
 interest_rate = 0.001
-sigma = 0.25  # volatitlity
-nu = 0.75  # kurtosis
-theta = -0.2  # skewness
+volatility = 0.25
+kurtosis = 0.75
+skewness = -0.2
 start_price = 100
 strike_price = 100
 
 # Construct object of Variance Gamma method
-VG = VarianceGamma(interest_rate, sigma, theta, nu)
+VG = VarianceGamma(interest_rate=interest_rate,
+                   volatility=volatility,
+                   skewness=skewness,
+                   kurtosis=kurtosis)
 
 # The different options types
 option_standard = PlainVanilla()
@@ -56,15 +59,15 @@ def write_comment_info_and_header(file_n, option_name):
 
     with open(file_n, 'w', newline='') as fd:
         fd.write("# Variance Gamma model \n")
-        fd.write('# Maturity = {} \n'.format(maturity))
-        fd.write('# Interest_rate = {} \n'.format(interest_rate))
-        fd.write("# Theta = {} \n".format(theta))
-        fd.write("# Nu = {} \n".format(nu))
-        fd.write("# Sigma = {} \n".format(sigma))
-        fd.write("# Start_price = {} \n".format(start_price))
-        fd.write("# Strike_price = {} \n".format(strike_price))
-        fd.write("# Option = {} \n".format(option_name))
-        fd.write("# Number of iterations = {} \n".format(number_iterations))
+        fd.write(f'# Maturity = {maturity} \n')
+        fd.write(f'# Interest_rate = {interest_rate} \n')
+        fd.write(f"# Skewness = {skewness} \n")
+        fd.write(f"# Kurtosis = {kurtosis} \n")
+        fd.write(f"# Volatility = {volatility} \n")
+        fd.write(f"# Start_price = {start_price} \n")
+        fd.write(f"# Strike_price = {strike_price} \n")
+        fd.write(f"# Option = {option_name} \n")
+        fd.write(f"# Number of iterations = {number_iterations} \n")
 
         # write the header
         csv.writer(fd).writerow(col_names)
@@ -91,6 +94,7 @@ def func_per_time_step(amount, queue):
                     temp_result = [time_step, amount, total_time, approx_call, variance]
 
                     queue.put((opt_name, temp_result))
+    print(f"End {amount}")
 
 
 def write_to_file_parallel(queue):

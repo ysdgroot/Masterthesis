@@ -51,7 +51,7 @@ class Lookback(OptionStyle):
 
         # the price under the risk natural measure
         option_price = math.e ** (-maturity * interest_rate) * np.mean(option_function(stock_prices, strike_prices))
-        # todo geef ook de variantie van de optie prijzen.
+
         # Variance of the prices
         var_option_pricing = np.var(math.e ** (-maturity * interest_rate) *
                                     option_function(stock_prices, strike_prices))

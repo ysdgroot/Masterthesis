@@ -9,7 +9,6 @@ def read_data(filename):
     return data
 
 
-# todo toevoegen van een legende
 def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_max=False, plot_mean=False,
                          restriction=None, plot_percentile=False, percentile=2):
     data_x = data[x_name]

@@ -59,12 +59,13 @@ def write_comment_info_and_header(file_n, option_name, plain_vanilla_option=Fals
 
     with open(file_n, 'w', newline='') as fd:
         fd.write("# Black Scholes model \n")
-        fd.write('# Maturity = {} \n'.format(maturity))
-        fd.write('# Interest_rate = {} \n'.format(interest_rate))
-        fd.write("# Start_price = {} \n".format(start_price))
-        fd.write("# Strike_price = {} \n".format(strike_price))
-        fd.write("# Option = {} \n".format(option_name))
-        fd.write("# Number of iterations = {} \n".format(number_iterations))
+        fd.write(f'# Maturity = {maturity} \n')
+        fd.write(f'# Interest_rate = {interest_rate} \n')
+        fd.write(f"# Volatitlity = {volatitlity}")
+        fd.write(f"# Start_price = {start_price} \n")
+        fd.write(f"# Strike_price = {strike_price} \n")
+        fd.write(f"# Option = {option_name} \n")
+        fd.write(f"# Number of iterations = {number_iterations} \n")
 
         # write the header
         csv.writer(fd).writerow(col_names)
@@ -102,6 +103,7 @@ def func_time_step(amount, queue):
                         temp_result.extend([rel_diff, rel_diff_abs, exact_call])
 
                     queue.put((opt_name, temp_result))
+    print(f"End {amount}")
 
 
 def write_to_file_parallel(queue):
