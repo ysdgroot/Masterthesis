@@ -19,7 +19,7 @@ class StockModel(ABC):
                               option_type='C',
                               steps_per_maturity=100,
                               seed=None,
-                              max_path_generation=None):
+                              max_path_generated=None):
         """
         The stock_paths will be generated of the object on which this method is called.
 
@@ -44,7 +44,7 @@ class StockModel(ABC):
         :param seed:Positive integer or None. (default = None)
                     If value is different from None, the function np.random.seed(seed) will be called.
                     For replication purposes, to get same 'random' values.
-        :param max_path_generation: positive int (not 0) or None. (default = None)
+        :param max_path_generated: positive int (not 0) or None. (default = None)
                     It is the maximum number of paths that are generated for the option pricing.
                     This is to reduce unnecessary RAM memory, but slower in speed.
                     If value is None, all the paths will be generated at the same time.
@@ -64,10 +64,10 @@ class StockModel(ABC):
 
             return values
 
-        if type(max_path_generation) is not int:
-            raise TypeError("max_path_generation must be an integer")
+        if type(max_path_generated) is not int:
+            raise TypeError("max_path_generated must be an integer")
 
-        value_splitter = amount_paths if max_path_generation is None else max_path_generation
+        value_splitter = amount_paths if max_path_generated is None else max_path_generated
         number_paths_generating = partition_maker(amount_paths, value_splitter)
 
         if seed is not None:

@@ -1,6 +1,5 @@
 from OptionModels.Options import OptionStyle
 import numpy as np
-import math
 
 
 class AsianMean(OptionStyle):

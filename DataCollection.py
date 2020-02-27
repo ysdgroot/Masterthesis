@@ -13,14 +13,13 @@ make_BS_data = True
 make_VG_data = False
 make_heston_data = False
 
-n_datapoints = 10000
+n_datapoints = 50000
 
 steps_per_maturity = 200
 n_paths_optionpricing = 15000
 
 # partition the data_sizes, to use less RAM
-n_datapoint_sizes = 5000
-n_path_sizes = 5000
+max_path_generated = 5000
 
 dict_general_info = {'n_datapoints (per type) ': n_datapoints,
                      'steps/maturity': steps_per_maturity,
@@ -83,14 +82,14 @@ if make_BS_data:
 
     file_name = create_name_file(model_name, forward_pricing_BS)
 
-    seed_values = 4
-    seed_paths = 7
+    seed_values = 3
+    seed_paths = 6
 
     stock_price_bound = (90, 110)
     strike_price_bound = (0.4, 1.6)
-    interest_rate_bound = (0.001, 0.035)
+    interest_rate_bound = (0, 0.035)
+    volatility_bound = (0.01, 0.45)
     maturity_bound = (1, 60)
-    volatility_bound = (0.01, 0.2)
 
     data_boundaries = {"Stock price": stock_price_bound,
                        "Strike price": strike_price_bound,
@@ -160,7 +159,7 @@ if make_BS_data:
                                                       option_type=['C', 'P'],
                                                       steps_per_maturity=steps_per_maturity,
                                                       seed=seed_paths + position,
-                                                      max_path_generation=n_path_sizes)
+                                                      max_path_generated=max_path_generated)
 
         # write datapoints in the csv-file
         values_rand = [start_price, strike_price, strike_price_perc, interest_rate, vol, maturity]
@@ -194,17 +193,17 @@ if make_VG_data:
     interest_rate_bound = (0.01, 0.035)
     maturity_bound = (1, 60)
 
-    theta_bound = (-0.35, -0.05)
-    sigma_bound = (0.05, 0.45)
-    nu_bound = (0.55, 0.95)
+    skewness_bound = (-0.35, -0.05)
+    volatility_bound = (0.05, 0.45)
+    kurtosis_bound = (0.55, 0.95)
 
     data_boundaries = {"Stock price": stock_price_bound,
                        "Strike price": strike_price_bound,
                        "Maturity": maturity_bound,
                        "Interest rate": interest_rate_bound,
-                       "Theta": theta_bound,
-                       "Sigma": sigma_bound,
-                       "Nu": nu_bound,
+                       "Volatility": volatility_bound,
+                       "Skewness": skewness_bound,
+                       "Kurtosis": kurtosis_bound,
                        "Seed values": seed_values,
                        "Seed paths": seed_paths,
                        "Forward pricing": forward_pricing_VG}
@@ -223,9 +222,9 @@ if make_VG_data:
                                                             strike_price_bound,
                                                             maturity_bound,
                                                             interest_rate_bound,
-                                                            theta_bound,
-                                                            sigma_bound,
-                                                            nu_bound,
+                                                            skewness_bound,
+                                                            volatility_bound,
+                                                            kurtosis_bound,
                                                             forward_pricing=forward_pricing_VG,
                                                             seed=seed_values)
 
@@ -238,9 +237,9 @@ if make_VG_data:
     # strike prices depends if usage of the forward pricing
     strike_prices = random_values["strike_price"]
 
-    thetas = random_values["skewness"]
-    sigmas = random_values["volatility"]
-    nus = random_values["kurtosis"]
+    skewness = random_values["skewness"]
+    volatilities = random_values["volatility"]
+    kurtosis = random_values["kurtosis"]
 
 
     # for parallelization
@@ -249,15 +248,15 @@ if make_VG_data:
         print(f"VG Datapoint {position}")
 
         interest_rate = interest_rates[position]
-        theta = thetas[position]
-        sigma = sigmas[position]
-        nu = nus[position]
+        skewn = skewness[position]
+        volatility = volatilities[position]
+        kurtos = kurtosis[position]
         start_price = stock_prices[position]
         maturity = maturities[position]
         strike_price = strike_prices[position]
         strike_price_perc = strike_prices_percentages[position]
 
-        vg = VarianceGamma(interest_rate, sigma, theta, nu)
+        vg = VarianceGamma(interest_rate, volatility, skewn, kurtos)
 
         # start simulation and calculation of the different options
         dict_option_values = vg.get_price_simulations(options,
@@ -268,10 +267,11 @@ if make_VG_data:
                                                       strike_price=strike_price,
                                                       option_type=['C', 'P'],
                                                       steps_per_maturity=steps_per_maturity,
-                                                      seed=seed_paths + position)
+                                                      seed=seed_paths + position,
+                                                      max_path_generated=max_path_generated)
 
         # write datapoints in the csv-file
-        values = [start_price, strike_price, strike_price_perc, interest_rate, theta, sigma, nu, maturity]
+        values = [start_price, strike_price, strike_price_perc, interest_rate, skewn, volatility, kurtos, maturity]
 
         values_call = values + ['C'] + dict_option_values['C']
         values_put = values + ['P'] + dict_option_values['P']
@@ -396,7 +396,8 @@ if make_heston_data:
                                                           strike_price=strike_price,
                                                           option_type=['C', 'P'],
                                                           steps_per_maturity=steps_per_maturity,
-                                                          seed=seed_paths + position)
+                                                          seed=seed_paths + position,
+                                                          max_path_generated=max_path_generated)
 
         # write datapoints in the csv-file
         values = [start_price, strike_price, strike_price_perc, interest_rate, maturity]
@@ -416,7 +417,7 @@ if make_heston_data:
 def main_bs():
     manager = Manager()
     queue = manager.Queue()
-    pool = Pool(4)
+    pool = Pool(5)
 
     # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
@@ -436,7 +437,7 @@ def main_bs():
 def main_vg():
     manager = Manager()
     queue = manager.Queue()
-    pool = Pool(4)
+    pool = Pool(5)
 
     # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
@@ -456,7 +457,7 @@ def main_vg():
 def main_h():
     manager = Manager()
     queue = manager.Queue()
-    pool = Pool(3)
+    pool = Pool(5)
 
     # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
