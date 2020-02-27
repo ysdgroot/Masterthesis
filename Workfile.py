@@ -1,5 +1,4 @@
 from ModelsStock.BlackScholes import BlackScholes
-import ModelsStock.BlackScholes as BS
 from ModelsStock.BlackScholes import BlackScholes
 from OptionModels.PlainVanilla import PlainVanilla
 from OptionModels.EuropeanAsian import AsianMean
@@ -18,6 +17,35 @@ from sklearn.ensemble import RandomForestRegressor
 import math
 from sklearn.metrics import mean_squared_error
 
+maturity = 10
+interest_rate = 0.001
+volatitlity = 0.1
+start_price = 100
+strike_price = 100
+
+n_paths = 10000
+
+BS = BlackScholes(interest_rate, volatitlity)
+
+# Different types of options
+option_standard = PlainVanilla()
+option_asian = AsianMean()
+option_lookback = Lookback()
+
+options = [option_standard, option_asian, option_lookback]
+option_names = ["Plainvanilla", "Asian", "Lookback"]
+
+np.random.seed(8)
+value1 = BS.get_price_simulations(options, n_paths, start_price, maturity, interest_rate, strike_price=strike_price,
+                                  option_type=['C', 'P'])
+
+np.random.seed(8)
+value2 = BS.get_price_simulations(options, n_paths, start_price, maturity, interest_rate, strike_price=strike_price,
+                                  option_type='C')
+
+print(value1)
+print(value2)
+
 # data_test = pd.read_csv("GeneratedData/BS model.csv", header=0, comment='#')
 # col_names_X = ["stock_price", "strike_price", "interest_rate", "volatility", "maturity", "call/put"]
 #
@@ -26,14 +54,26 @@ from sklearn.metrics import mean_squared_error
 #
 # print(test)
 
-optio = [PlainVanilla(), AsianMean(), Lookback()]
-stock_paths = np.array([[1, 2, 2, 1, 3, 2, 4, 5], [0, 1, 1, 0, 1, 2, 1, 0]])
-# stock_paths = BlackScholes(0.01, 0.1).get_stock_prices(100, 100, 2, steps_per_maturity=4)
+# dict_option_prices = dict()
+#
+# opt_name = "Test"
+#
+# for i in range(5):
+#     opt = dict_option_prices.get(opt_name, [])
+#     opt += [i]
+#     dict_option_prices[opt_name] = opt
+#
+# print(dict_option_prices)
 
 
-for option in optio:
-    print(option.get_prices_per_path(stock_paths, 2, 0, strike_price=1))
-    print(option.get_price_option(stock_paths, 2, 0)[0])
+# optio = [PlainVanilla(), AsianMean(), Lookback()]
+# # stock_paths = np.array([[1, 2, 2, 1, 3, 2, 4, 5], [0, 1, 1, 0, 1, 2, 1, 0]])
+# stock_paths = BlackScholes(0.01, 0.1).get_stock_prices(100, 100, 2, steps_per_maturity=4, seed=3)
+#
+#
+# for option in optio:
+#     # print(option.get_prices_per_path(stock_paths, 2, interest_rate=0.01))
+#     print(option.get_price_option(stock_paths, 2, interest_rate=0.01)[0])
 
 # data = BS.get_random_data_and_solutions('C', 10000, [80, 120], [0.01, 0.03], [0.01, 0.2], [0.25, 5], [70, 130])
 # print('End new data')

@@ -17,9 +17,9 @@ write_header_to_files = [True, True, True]
 do_tests = [True, True, True]
 
 # The different file_name to write through
-file_name_standard = 'Datafiles/Test-steps and accuracy-BS-v1-1.csv'
-file_name_asian = 'Datafiles/Test-steps and accuracy-BS-v2-1-Asian.csv'
-file_name_lookback = 'Datafiles/Test-steps and accuracy-BS-v3-1-Lookback.csv'
+file_name_standard = 'Datafiles/Test-steps and accuracy-BS-v1-1-test.csv'
+file_name_asian = 'Datafiles/Test-steps and accuracy-BS-v2-1-Asian-test.csv'
+file_name_lookback = 'Datafiles/Test-steps and accuracy-BS-v3-1-Lookback-test.csv'
 
 file_names = [file_name_standard, file_name_asian, file_name_lookback]
 
@@ -77,6 +77,7 @@ for bool_header, bool_test, file_n, option_n, is_standard in zip(write_header_to
         write_comment_info_and_header(file_n, option_n, plain_vanilla_option=is_standard)
 
 
+# todo code aanpassen om minder RAM te verbruiken
 def func_time_step(amount, queue):
     for time_step in time_steps_per_maturities:
         print(f"Amount {amount}, timestep = {time_step} ")

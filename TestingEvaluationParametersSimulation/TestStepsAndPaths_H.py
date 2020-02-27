@@ -7,9 +7,8 @@ import csv
 import numpy as np
 from multiprocessing import Manager, Pool
 
-
 # Testing paths
-# time_steps_per_maturities = [i for i in range(100, 1001, 100)]
+# time_steps_per_maturities = [i for i in range(500, 1001, 100)]
 # amount_paths = [i for i in range(1000, 20001, 1000)]
 
 time_steps_per_maturities = [j for j in range(5, 100, 5)] + [i for i in range(100, 1001, 100)]
@@ -17,10 +16,13 @@ amount_paths = [i for i in range(1000, 20001, 1000)]
 
 write_header_to_files = [True, True, True]
 # write_header_to_files = [False, False, False]
-# do_tests = [True, True, True]
-do_tests = [False, False, False]
+do_tests = [True, True, True]
+# do_tests = [False, False, False]
 
 number_iterations = 50
+
+# max number of paths generating during the process, to reduce RAM memory
+max_paths_generating = 5000
 
 # The different file_name to write through
 file_name_standard = 'Datafiles/Test-steps and accuracy-H-v1-1.csv'
@@ -53,7 +55,18 @@ options = [option_standard, option_asian, option_lookback]
 option_names = ["Plainvanilla", "Asian", "Lookback"]
 dict_file_names = dict(zip(option_names, file_names))
 
+
 ########################################################################################################################
+
+
+def partition_maker(total_number, value_splitter):
+    deler, rest = divmod(total_number, value_splitter)
+
+    values = [value_splitter] * deler
+    if rest != 0:
+        values += [rest]
+
+    return values
 
 
 def write_comment_info_and_header(file_n, option_name):
@@ -83,22 +96,62 @@ for bool_header, bool_test, file_name, option_name in zip(write_header_to_files,
         write_comment_info_and_header(file_name, option_name)
 
 
+# def function_per_amount_paths(amount, queue):
+#     for time_step in time_steps_per_maturities:
+#         print(f"Amount {amount}, timestep = {time_step} ")
+#
+#         for i in range(number_iterations):
+#             start = time.perf_counter()
+#             paths = heston.get_stock_prices(amount, start_price, maturity, steps_per_maturity=time_step, seed=42+i)
+#             end = time.perf_counter()
+#             # total_time += end - start
+#             total_time = end - start
+#
+#             for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
+#                 if bool_test:
+#                     approx_call, variance = option.get_price_option(paths, maturity, interest_rate,
+#                                                                  strike_price=strike_price)
+#
+#                     temp_result = [time_step, amount, total_time, approx_call, variance]
+#
+#                     queue.put((opt_name, temp_result))
+#
+#     print(f"End {amount}")
+
+
 def function_per_amount_paths(amount, queue):
     for time_step in time_steps_per_maturities:
         print(f"Amount {amount}, timestep = {time_step} ")
 
+        n_paths_generating = partition_maker(amount, max_paths_generating)
         for i in range(number_iterations):
-            start = time.perf_counter()
-            paths = heston.get_stock_prices(amount, start_price, maturity, steps_per_maturity=time_step,
-                                            seed=42 + i)
-            end = time.perf_counter()
-            # total_time += end - start
-            total_time = end - start
+            total_time = 0
+
+            dict_option_prices = dict()
+
+            # set seed
+            np.random.seed(42 + i)
+            for n_paths in n_paths_generating:
+                start = time.perf_counter()
+                paths = heston.get_stock_prices(n_paths, start_price, maturity, steps_per_maturity=time_step)
+                end = time.perf_counter()
+                # total_time += end - start
+                total_time += end - start
+
+                for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
+                    if bool_test:
+                        option_prices = dict_option_prices.get(opt_name, default=[])
+                        option_prices += option.get_prices_per_path(paths,
+                                                                    maturity,
+                                                                    interest_rate,
+                                                                    strike_price=strike_price)
+                        dict_option_prices[opt_name] = option_prices
 
             for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
                 if bool_test:
-                    approx_call, variance = option.get_price_option(paths, maturity, interest_rate,
-                                                                    strike_price=strike_price)
+                    prices_option = dict_option_prices[opt_name]
+                    approx_call = np.mean(prices_option)
+                    variance = np.var(prices_option)
 
                     temp_result = [time_step, amount, total_time, approx_call, variance]
 
@@ -139,4 +192,5 @@ def main_h():
 
 if __name__ == "__main__":
     print('Start')
-    main_h()
+    if sum(do_tests) > 0:
+        main_h()

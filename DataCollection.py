@@ -15,8 +15,12 @@ make_heston_data = False
 
 n_datapoints = 10000
 
-steps_per_maturity = 100
-n_paths_optionpricing = 10000
+steps_per_maturity = 200
+n_paths_optionpricing = 15000
+
+# partition the data_sizes, to use less RAM
+n_datapoint_sizes = 5000
+n_path_sizes = 5000
 
 dict_general_info = {'n_datapoints (per type) ': n_datapoints,
                      'steps/maturity': steps_per_maturity,
@@ -107,7 +111,9 @@ if make_BS_data:
 
     # write the info into the files
     write_comments(file_name, dict_general_info, data_boundaries)
+    # ----------------------------------------------------------------------------------------------------------------------
 
+    # todo herschrijven van dit stuk om minder RAM te verbruiken dan echt nodig (via n_datapoint_sizes)
     random_values = BlackScholes.generate_random_variables(n_datapoints,
                                                            stock_price_bound,
                                                            strike_price_bound,
@@ -126,7 +132,6 @@ if make_BS_data:
 
     # strike prices depends if usage of the forward pricing
     strike_prices = random_values["strike_price"]
-
 
     # for parallelization
     def calculate_save_price_bs(position, queue):
@@ -154,7 +159,8 @@ if make_BS_data:
                                                       strike_price=strike_price,
                                                       option_type=['C', 'P'],
                                                       steps_per_maturity=steps_per_maturity,
-                                                      seed=seed_paths + position)
+                                                      seed=seed_paths + position,
+                                                      max_path_generation=n_path_sizes)
 
         # write datapoints in the csv-file
         values_rand = [start_price, strike_price, strike_price_perc, interest_rate, vol, maturity]
@@ -210,6 +216,7 @@ if make_VG_data:
 
     # write the info into the files
     write_comments(file_name, dict_general_info, data_boundaries)
+    # ----------------------------------------------------------------------------------------------------------------------
 
     random_values = VarianceGamma.generate_random_variables(n_datapoints,
                                                             stock_price_bound,
@@ -234,9 +241,6 @@ if make_VG_data:
     thetas = random_values["skewness"]
     sigmas = random_values["volatility"]
     nus = random_values["kurtosis"]
-
-    # set seed
-    np.random.seed(seed=seed_paths)
 
 
     # for parallelization
@@ -328,6 +332,7 @@ if make_heston_data:
 
     # write the info into the files
     write_comments(file_name, dict_general_info, data_boundaries)
+    # ----------------------------------------------------------------------------------------------------------------------
 
     # creation of random values for the Heston Model
     random_values = HestonModel.generate_random_variables(n_datapoints,
