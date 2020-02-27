@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import math
+import numpy as np
 
 
 class OptionStyle(ABC):
@@ -44,8 +46,11 @@ class OptionStyle(ABC):
         """
         return dict({"C": self.call, "P": self.put})
 
-    @abstractmethod
-    def get_price(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
+    def get_price_option(self, stock_paths,
+                         maturity,
+                         interest_rate,
+                         option_type="C",
+                         strike_price=None):
         """
         A method necessary for this class, to price the option based on the given paths.
 
@@ -66,9 +71,62 @@ class OptionStyle(ABC):
 
         :return: A positive value, which represents the price of the option.
         """
-        pass
+
+        # Get the price (now = discounted price)
+        option_values = self.get_prices_per_path(stock_paths,
+                                                 maturity,
+                                                 interest_rate,
+                                                 option_type=option_type,
+                                                 strike_price=strike_price)
+
+        # Price of the option in the value of all option_values
+        option_price = np.mean(option_values)
+
+        # The variance of all the pricing_values (which are already discounted)
+        var_option_pricing = np.var(option_values)
+
+        return option_price, var_option_pricing
+
+    def get_prices_per_path(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
+        """
+        This function is for simulations, to approximate the optimal option price.
+        The optimal price is the mean of the possible profits (zero if there is no profit).
+
+        :param stock_paths: 2d numpy.array with each row a stock path (price)
+                            The columns represents the price at the time for the stock.
+                            First column is the same value, which is the start_price. (There is no check for this)
+        :param maturity: The time of maturity of the option.
+                        Necessary for the price under the risk natural measure.
+        :param interest_rate: The interest_rate per value of maturity.
+                        Necessary for the price under the risk natural measure.
+        :param option_type: 'C' for a call option (default value)
+                            'P' for a put option
+        :param strike_price: a positive float or None. (default=None)
+                            If None, the default value will be the first price starting of the paths,
+                                unless the strike price of the option is path-dependent,
+                                in this case the value of strike_price will not be used, but instead be calculated.
+
+        :return: A positive value, which represents the price of the option at the moment (risk natural measure)
+        """
+
+        # check if the option_type is correct
+        option_function = self.optiontype_dict.get(option_type)
+        if option_function is None:
+            raise ValueError("Invalid option_type")
+
+        strike_prices = self.get_all_strike_prices(stock_paths, strike_price)
+
+        # Gets the last value of the stock, for European vanilla option (the last column)
+        stock_prices = stock_paths[:, -1]
+
+        # the price under the risk natural measure
+        option_price_paths = math.e ** (-maturity * interest_rate) * option_function(stock_prices, strike_prices)
+
+        return option_price_paths
 
     @abstractmethod
-    def get_prices_paths(self, stock_paths, maturity, interest_rate, option_type="C", strike_price=None):
-        raise NotImplementedError
+    def get_all_strike_prices(self, stock_paths, strike_price):
+        """
+        Function to generalise the option pricing.
+        """
         pass
