@@ -97,7 +97,8 @@ def function_per_amount_paths(amount, queue):
 
             for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
                 if bool_test:
-                    approx_call, variance = option.get_price(paths, maturity, interest_rate, strike_price=strike_price)
+                    approx_call, variance = option.get_price_option(paths, maturity, interest_rate,
+                                                                    strike_price=strike_price)
 
                     temp_result = [time_step, amount, total_time, approx_call, variance]
 

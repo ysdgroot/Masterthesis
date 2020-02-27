@@ -63,19 +63,19 @@ class StockModel(ABC):
         if type(option_type) is list:
             # If the option_type is a list, we make a dictionary to get the correct values.
             for opt_type in option_type:
-                dict_values[opt_type] = [option_style.get_price(simulations,
-                                                                maturity,
-                                                                interest_rate,
-                                                                option_type=opt_type,
-                                                                strike_price=strike_price)[0]
+                dict_values[opt_type] = [option_style.get_price_option(simulations,
+                                                                       maturity,
+                                                                       interest_rate,
+                                                                       option_type=opt_type,
+                                                                       strike_price=strike_price)[0]
                                          for option_style in option_styles]
             return dict_values
         else:
             # Make list with the prices for each option style
-            prices = [option_style.get_price(simulations,
-                                             maturity,
-                                             interest_rate,
-                                             option_type=option_type,
-                                             strike_price=strike_price)[0]
+            prices = [option_style.get_price_option(simulations,
+                                                    maturity,
+                                                    interest_rate,
+                                                    option_type=option_type,
+                                                    strike_price=strike_price)[0]
                       for option_style in option_styles]
             return prices

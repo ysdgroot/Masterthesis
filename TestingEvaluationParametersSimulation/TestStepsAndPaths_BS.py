@@ -89,7 +89,8 @@ def func_time_step(amount, queue):
             for boolean_test, name_file, opt, is_standard_opt, opt_name in zip(do_tests, file_names, options,
                                                                                is_plain_vanilla, option_names):
                 if boolean_test:
-                    approx_call, variance = opt.get_price(paths, maturity, interest_rate, strike_price=strike_price)
+                    approx_call, variance = opt.get_price_option(paths, maturity, interest_rate,
+                                                                 strike_price=strike_price)
 
                     temp_result = [time_step, amount, total_time, approx_call, variance]
 

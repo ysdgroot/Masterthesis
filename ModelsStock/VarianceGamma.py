@@ -16,8 +16,6 @@ class VarianceGamma(StockModel):
         :param kurtosis: (parameter 'nu') Positive float.
                     The implied kurtosis for the Variance Gamma process.
         """
-        # todo controleer op volgordes
-        print("Controleer op volgordes van de VG model, dit is aangepast!!")
         self.interest_rate = interest_rate
         self.skewness = skewness
         if volatility < 0:
@@ -30,7 +28,6 @@ class VarianceGamma(StockModel):
     def get_stock_prices(self, amount_paths, start_price, maturity, steps_per_maturity=100, seed=None):
         """
         Simulations of stock prices based on the Variance Gamma model.
-        # todo geef referentie voor meer uitleg erover
 
         :param amount_paths: Positive integer.
                             This is the total number of paths generated.

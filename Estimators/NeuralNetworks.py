@@ -1,7 +1,7 @@
 import keras
 import value as value
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Dropout
 import GeneratedData
 import numpy as np
 import pandas as pd
@@ -32,7 +32,8 @@ optimizer = None  # TODO: bekijken welke de beste zou zijn voor tijdsafhankelijk
 # Making the neural network (test-version)
 model = Sequential()
 model.add(Dense(units=100, activation='relu', input_dim=5))
-# model.add(Dense(units=50, activation='relu'))
+model.add(Dropout(0.1))
+model.add(Dense(units=50, activation='relu'))
 # model.add(Dense(units=10, activation='relu'))
 model.add(Dense(units=1, activation='linear'))
 

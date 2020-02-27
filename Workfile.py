@@ -18,18 +18,22 @@ from sklearn.ensemble import RandomForestRegressor
 import math
 from sklearn.metrics import mean_squared_error
 
-data_test = pd.read_csv("GeneratedData/BS model.csv", header=0, comment='#')
-col_names_X = ["stock_price", "strike_price", "interest_rate", "volatility", "maturity", "call/put"]
+# data_test = pd.read_csv("GeneratedData/BS model.csv", header=0, comment='#')
+# col_names_X = ["stock_price", "strike_price", "interest_rate", "volatility", "maturity", "call/put"]
+#
+# test = data_test[col_names_X]
+# print(test.dtypes)
+#
+# print(test)
 
-test = data_test[col_names_X]
-print(test.dtypes)
-
-print(test)
-
-# option = AsianMean(1)
-# # stock_paths = np.array([[1, 2, 2, 1, 3, 2, 4, 5], [0, 1, 1, 0, 1, 2, 1, 0]])
+optio = [PlainVanilla(), AsianMean(), Lookback()]
+stock_paths = np.array([[1, 2, 2, 1, 3, 2, 4, 5], [0, 1, 1, 0, 1, 2, 1, 0]])
 # stock_paths = BlackScholes(0.01, 0.1).get_stock_prices(100, 100, 2, steps_per_maturity=4)
-# print(option.get_price(stock_paths, 2, 0.1))
+
+
+for option in optio:
+    print(option.get_prices_per_path(stock_paths, 2, 0, strike_price=1))
+    print(option.get_price_option(stock_paths, 2, 0)[0])
 
 # data = BS.get_random_data_and_solutions('C', 10000, [80, 120], [0.01, 0.03], [0.01, 0.2], [0.25, 5], [70, 130])
 # print('End new data')
@@ -103,7 +107,7 @@ print(test)
 #     for time_step in time_steps_per_maturity:
 #         paths = BS.get_stock_prices(amount, start_price, maturity, time_step_per_maturity=time_step)
 #
-#         approx_call = option.get_price(paths, strike_price=strike_price)
+#         approx_call = option.get_price_option(paths, strike_price=strike_price)
 #         #absolute_rel_diff = abs(exact_call - approx_call) / exact_call
 #
 #         print("Amount: {} ; time_step: {}".format(amount, time_step))
@@ -139,10 +143,10 @@ print(test)
 #
 #
 # def test_direct():
-#     option.get_price(path_stock, strike_price=strike_price,option_type='C')
+#     option.get_price_option(path_stock, strike_price=strike_price,option_type='C')
 #
 #
-# # print(option.get_price(path_stock, strike_price=strike_price, option_type='P'))
+# # print(option.get_price_option(path_stock, strike_price=strike_price, option_type='P'))
 # tijd_oproep = timeit.timeit(test_oproep, number=10000)
 # tijd_direct = timeit.timeit(test_direct, number=10000)
 #

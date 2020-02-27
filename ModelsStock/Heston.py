@@ -33,7 +33,6 @@ class HestonModel(StockModel):
     def get_stock_prices(self, n_paths, start_price, maturity, steps_per_maturity=100, seed=None):
         """
         Simulations of stock prices based on the Heston model.
-        # todo: beschrijving van het heston model
 
         :param n_paths: Positive integer.
                             This is the total number of paths generated.
