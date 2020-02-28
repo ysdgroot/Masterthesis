@@ -7,6 +7,7 @@ import csv
 import numpy as np
 from multiprocessing import Manager, Pool
 
+# todo: maak deze file nog algemener, want er is niet zoveel verschil met de andere files (niet dringend)
 # Testing paths
 # time_steps_per_maturities = [i for i in range(500, 1001, 100)]
 # amount_paths = [i for i in range(1000, 20001, 1000)]
@@ -140,11 +141,11 @@ def function_per_amount_paths(amount, queue):
 
                 for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
                     if bool_test:
-                        option_prices = dict_option_prices.get(opt_name, default=[])
-                        option_prices += option.get_prices_per_path(paths,
-                                                                    maturity,
-                                                                    interest_rate,
-                                                                    strike_price=strike_price)
+                        option_prices = dict_option_prices.get(opt_name, [])
+                        option_prices.extend(option.get_prices_per_path(paths,
+                                                                        maturity,
+                                                                        interest_rate,
+                                                                        strike_price=strike_price))
                         dict_option_prices[opt_name] = option_prices
 
             for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
@@ -192,5 +193,6 @@ def main_h():
 
 if __name__ == "__main__":
     print('Start')
-    if sum(do_tests) > 0:
+    start = input("Mag starten?(y/n)")
+    if sum(do_tests) > 0 and start == 'y':
         main_h()

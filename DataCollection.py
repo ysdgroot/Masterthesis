@@ -476,9 +476,11 @@ def main_h():
 
 if __name__ == "__main__":
     print('Start')
-    if make_BS_data:
+    start = input("Sure to start?(y/n)")
+    may_start = start == 'y'
+    if make_BS_data and may_start:
         main_bs()
-    if make_VG_data:
+    if make_VG_data and may_start:
         main_vg()
-    if make_heston_data:
+    if make_heston_data and may_start:
         main_h()
