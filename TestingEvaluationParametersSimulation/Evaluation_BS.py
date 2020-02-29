@@ -58,7 +58,6 @@ def read_data(filename):
 
 
 def get_filename(model, option_type):
-    # todo: files zijn verplaatst!! TEST!!
     return f'Datafiles/{dict_model_names[model]}/Test-steps and accuracy-{model}-{option_type}.csv'
 
 
@@ -104,9 +103,9 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
             mean_line.append(np.mean(data_y[data[x_name] == x]))
         plt.plot(unique_x, mean_line, color='red')
     # todo deze stuk code verwijderen
-    # restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
+    restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
     # restrictions = [("paths", i, i + 1000) for i in range(1000, 20000, 1000)]
-    restrictions = [("time_step", 5, 55), ("time_step", 55, 100), ("time_step", 101, 300)]
+    # restrictions = [("time_step", 5, 55), ("time_step", 55, 100), ("time_step", 101, 300)]
     # ("time_step", 101, 300), ("time_step", 301, 600),, ("time_step", 801, 1000)
     for restriction in restrictions:
         plt.scatter(data_x[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])],
@@ -159,12 +158,12 @@ if any(evaluate_options) and any(evaluate_options):
 ########################################################################################################################
 # TESTING ########################
 ##################################
-model = "VG"
+model = "H"
 option = "Standard"
 
-file_name = "Datafiles/Test-steps and accuracy-VG-v1-1.csv"
-# file_name = "Datafiles/Test-steps and accuracy-VG-v2-1-Asian.csv"
-# file_name = "Datafiles/Test-steps and accuracy-VG-v3-1-Lookback.csv"
+file_name = "Datafiles/Test-steps and accuracy-H-v1-1.csv"
+# file_name = "Datafiles/Test-steps and accuracy-H-v2-1-Asian.csv"
+# file_name = "Datafiles/Test-steps and accuracy-H-v3-1-Lookback.csv"
 file_name_2 = get_filename(model, option)
 
 data_options = read_data(file_name)
@@ -175,15 +174,15 @@ new_data = data_options
 
 print(new_data)
 
-x_name = "paths"
-# x_name = "time_step"
+# x_name = "paths"
+x_name = "time_step"
 # restriction = ("paths", 15000, 20000)
 #
 # restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
 
 # y_name = "variance"
 
-# restriction = ("time_step", 5, 200)
+restriction = ("time_step", 5, 100)
 
 plot_change_variance(new_data, x_name,
                      y_name,
@@ -195,6 +194,21 @@ plot_change_variance(new_data, x_name,
                      plot_percentile=False,
                      percentile=percentile,
                      restriction=restriction)
+
+unique_time_steps = data_options["time_step"].unique()
+unique_paths = data_options["paths"].unique()
+
+n_paths = 15000
+for path in unique_paths:
+    var_all_time_steps = []
+    for i in unique_time_steps:
+        positions_paths = data_options["paths"] == path
+        positions_time_steps = data_options["time_step"] == i
+        var_all_time_steps.append(np.var(data_options[positions_paths & positions_time_steps]["option_price"]))
+
+    plt.scatter(unique_time_steps, var_all_time_steps)
+
+plt.show()
 
 # restrictions = [("paths", 1000, 5000)] + [("paths", i, i + 5000) for i in range(5000, 20000, 5000)]
 #

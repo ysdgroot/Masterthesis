@@ -17,8 +17,8 @@ amount_paths = [i for i in range(1000, 20001, 1000)]
 
 write_header_to_files = [True, True, True]
 # write_header_to_files = [False, False, False]
-do_tests = [True, True, True]
-# do_tests = [False, False, False]
+# do_tests = [True, True, True]
+do_tests = [False, False, False]
 
 number_iterations = 50
 
