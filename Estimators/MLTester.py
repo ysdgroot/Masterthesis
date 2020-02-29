@@ -1,7 +1,7 @@
 from sklearn.model_selection import cross_val_score
 from keras.models import Sequential
 
-# TODO: controleer voor een mogelijk probleem met een NN, omdat het werkt met Keras en niet met sklearn
+
 def time_to_fit(regression_model, training_data, solutions_training_data):
     """
     To look how fast the training process goes for the model
@@ -52,4 +52,5 @@ def performance_model(fitted_model, test_data, solutions_test_data):
     max_er = max_error(solutions_test_data, pred_y)
 
     return score, [mse, rmse, absolute_error, max_er]
+
 

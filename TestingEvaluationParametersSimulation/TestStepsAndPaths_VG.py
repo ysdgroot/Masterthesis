@@ -1,7 +1,5 @@
-from ModelsStock.VarianceGamma import VarianceGamma
-from OptionModels.PlainVanilla import PlainVanilla
-from OptionModels.EuropeanAsian import AsianMean
-from OptionModels.EuropeanLookback import Lookback
+from stockmodels import BlackScholes, VarianceGamma, HestonModel
+from options import PlainVanilla, AsianMean, Lookback
 import time
 import csv
 from multiprocessing import Manager, Pool

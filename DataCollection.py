@@ -1,16 +1,12 @@
-from ModelsStock.BlackScholes import BlackScholes
-from ModelsStock.VarianceGamma import VarianceGamma
-from ModelsStock.Heston import HestonModel
-from OptionModels.PlainVanilla import PlainVanilla
-from OptionModels.EuropeanAsian import AsianMean
-from OptionModels.EuropeanLookback import Lookback
+from options import PlainVanilla, AsianMean, Lookback
+from stockmodels import BlackScholes, VarianceGamma, HestonModel
 from multiprocessing import Manager, Pool
 import numpy as np
 import csv
 from datetime import datetime
 
-make_BS_data = True
-make_VG_data = False
+make_BS_data = False
+make_VG_data = True
 make_heston_data = False
 
 n_datapoints = 50000
@@ -56,10 +52,11 @@ def write_to_file_parallel(name_file, queue):
             f.flush()
 
 
-def create_name_file(model, forward_pricing_bool):
+def create_name_file(model, forward_pricing_bool, testing=False):
     date_today = datetime.now().strftime('%d-%m-%Y')
     forward_bool = "(F)" if forward_pricing_bool else ""
-    return f"GeneratedData/Generated Data - {model} model - {date_today}{forward_bool}.csv"
+    test_file = "-Test data" if testing else ""
+    return f"GeneratedData/Generated Data - {model} model - {date_today}{forward_bool}{test_file}.csv"
 
 
 def write_comments(name_file, general_info, dict_data_boundaries):
@@ -78,9 +75,10 @@ def write_comments(name_file, general_info, dict_data_boundaries):
 ########################################################################################################################
 if make_BS_data:
     forward_pricing_BS = False
+    test_data = True
     model_name = "BS"
 
-    file_name = create_name_file(model_name, forward_pricing_BS)
+    file_name = create_name_file(model_name, forward_pricing_BS, testing=test_data)
 
     seed_values = 3
     seed_paths = 6
@@ -90,6 +88,13 @@ if make_BS_data:
     interest_rate_bound = (0, 0.035)
     volatility_bound = (0.01, 0.45)
     maturity_bound = (1, 60)
+
+    if test_data:
+        stock_price_bound = (95, 105)
+        strike_price_bound = (0.6, 1.4)
+        interest_rate_bound = (0.001, 0.03)
+        volatility_bound = (0.015, 0.4)
+        maturity_bound = (1, 50)
 
     data_boundaries = {"Stock price": stock_price_bound,
                        "Strike price": strike_price_bound,
@@ -176,11 +181,12 @@ if make_BS_data:
 ########################################################################################################################
 if make_VG_data:
     forward_pricing_VG = False
+    test_data = False
     model_name = "VG"
 
-    file_name = create_name_file(model_name, forward_pricing_VG)
-    seed_values = 43
-    seed_paths = 74
+    file_name = create_name_file(model_name, forward_pricing_VG, testing=test_data)
+    seed_values = 53
+    seed_paths = 84
 
     # add 1 to seed to get other values  when using forward pricing. Not strictly necessary.
     if forward_pricing_VG:
@@ -284,7 +290,7 @@ if make_VG_data:
 # ------------------------------- Heston Model ------------------------------------------------------------------------#
 ########################################################################################################################
 if make_heston_data:
-    forward_pricing_heston = True
+    forward_pricing_heston = False
     model_name = "Heston"
 
     file_name = create_name_file(model_name, forward_pricing_heston)

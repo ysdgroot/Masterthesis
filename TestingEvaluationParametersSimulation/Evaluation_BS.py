@@ -24,8 +24,8 @@ percentile = 1
 restriction = None
 
 # column name from the csv file as the X-variable
-# x_name = "paths"
-x_name = "time_step"
+x_name = "paths"
+# x_name = "time_step"
 
 # column name from de csv file as Y-variable
 y_name = "option_price"
@@ -103,15 +103,15 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
             mean_line.append(np.mean(data_y[data[x_name] == x]))
         plt.plot(unique_x, mean_line, color='red')
     # todo deze stuk code verwijderen
-    restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
+    # restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
     # restrictions = [("paths", i, i + 1000) for i in range(1000, 20000, 1000)]
-    # restrictions = [("time_step", 5, 55), ("time_step", 55, 100), ("time_step", 101, 300)]
-    # ("time_step", 101, 300), ("time_step", 301, 600),, ("time_step", 801, 1000)
-    for restriction in restrictions:
-        plt.scatter(data_x[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])],
-                    data_y[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])])
+    # restrictions = [("time_step", 5, 10),("time_step", 100, 100), ("time_step", 200, 200), ("time_step", 900, 1000)]
+    # # ("time_step", 101, 300), ("time_step", 301, 600),, ("time_step", 801, 1000), ("time_step", 55, 100), ("time_step", 101, 300),
+    # for restriction in restrictions:
+    #     plt.scatter(data_x[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])],
+    #                 data_y[(restriction[1] <= data[restriction[0]]) & (data[restriction[0]] <= restriction[2])])
 
-    # plt.scatter(data_x, data_y)
+    plt.scatter(data_x, data_y)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -176,24 +176,24 @@ print(new_data)
 
 # x_name = "paths"
 x_name = "time_step"
-# restriction = ("paths", 15000, 20000)
+restriction = ("paths", 10000, 10000)
 #
 # restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
 
 # y_name = "variance"
 
-restriction = ("time_step", 5, 100)
+# restriction = ("time_step", 5, 100)
 
-plot_change_variance(new_data, x_name,
-                     y_name,
-                     title=title_plot.format(option, dict_model_names[model]),
-                     xlabel=x_label,
-                     ylabel=y_label,
-                     plot_mean=plot_mean,
-                     plot_min_max=plot_min_max,
-                     plot_percentile=False,
-                     percentile=percentile,
-                     restriction=restriction)
+# plot_change_variance(new_data, x_name,
+#                      y_name,
+#                      title=title_plot.format(option, dict_model_names[model]),
+#                      xlabel=x_label,
+#                      ylabel=y_label,
+#                      plot_mean=plot_mean,
+#                      plot_min_max=plot_min_max,
+#                      plot_percentile=True,
+#                      percentile=percentile,
+#                      restriction=restriction)
 
 unique_time_steps = data_options["time_step"].unique()
 unique_paths = data_options["paths"].unique()
@@ -201,12 +201,14 @@ unique_paths = data_options["paths"].unique()
 n_paths = 15000
 for path in unique_paths:
     var_all_time_steps = []
-    for i in unique_time_steps:
-        positions_paths = data_options["paths"] == path
-        positions_time_steps = data_options["time_step"] == i
-        var_all_time_steps.append(np.var(data_options[positions_paths & positions_time_steps]["option_price"]))
+    if path >= 10000:
+        time_steps = unique_time_steps[unique_time_steps <= 100]
+        for i in time_steps:
+            positions_paths = data_options["paths"] == path
+            positions_time_steps = data_options["time_step"] == i
+            var_all_time_steps.append(np.var(data_options[positions_paths & positions_time_steps]["option_price"]))
 
-    plt.scatter(unique_time_steps, var_all_time_steps)
+        plt.plot(time_steps, var_all_time_steps)
 
 plt.show()
 
