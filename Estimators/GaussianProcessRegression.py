@@ -3,7 +3,7 @@ import math
 from sklearn import gaussian_process
 from sklearn.metrics import mean_squared_error
 from sklearn.gaussian_process.kernels import Matern, WhiteKernel, ConstantKernel, RBF, DotProduct
-import ModelSaver
+import modelsaver
 import time
 
 

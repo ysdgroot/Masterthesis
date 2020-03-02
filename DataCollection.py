@@ -21,7 +21,7 @@ dict_general_info = {'n_datapoints (per type) ': n_datapoints,
                      'steps/maturity': steps_per_maturity,
                      'n_paths/option': n_paths_optionpricing}
 
-options = [PlainVanilla(), AsianMean(), Lookback(lookback_min=True), Lookback(lookback_min=False)]
+option_types = [PlainVanilla(), AsianMean(), Lookback(lookback_min=True), Lookback(lookback_min=False)]
 column_names_options = ["opt_standard", "opt_asianmean", "opt_lookbackmin", "opt_lookbackmax"]
 
 
@@ -96,6 +96,10 @@ if make_BS_data:
         volatility_bound = (0.015, 0.4)
         maturity_bound = (1, 50)
 
+        seed_values += 2
+        seed_paths += 2
+
+    # for the comments in csv file
     data_boundaries = {"Stock price": stock_price_bound,
                        "Strike price": strike_price_bound,
                        "Maturity": maturity_bound,
@@ -105,8 +109,14 @@ if make_BS_data:
                        "Seed paths": seed_paths,
                        "Forward pricing": forward_pricing_BS}
 
-    column_names_values = ["stock_price", "strike_price", "strike_price_percent",
-                           "interest_rate", "volatility", "maturity", "call/put"]
+    # header in the csv file
+    column_names_values = ["stock_price",
+                           "strike_price",
+                           "strike_price_percent",
+                           "interest_rate",
+                           "volatility",
+                           "maturity",
+                           "call/put"]
 
     col_names = column_names_values + column_names_options
 
@@ -117,7 +127,6 @@ if make_BS_data:
     write_comments(file_name, dict_general_info, data_boundaries)
     # ----------------------------------------------------------------------------------------------------------------------
 
-    # todo herschrijven van dit stuk om minder RAM te verbruiken dan echt nodig (via n_datapoint_sizes)
     random_values = BlackScholes.generate_random_variables(n_datapoints,
                                                            stock_price_bound,
                                                            strike_price_bound,
@@ -154,8 +163,8 @@ if make_BS_data:
         exact_value_call = bs.solution_call_option(start_price, strike_price, maturity, interest_rate, vol)
         exact_value_put = bs.solution_put_option(start_price, strike_price, maturity, interest_rate, vol)
 
-        # start simulation and calculation of the different options
-        dict_option_values = bs.get_price_simulations(options,
+        # start simulation and calculation of the different option_types
+        dict_option_values = bs.get_price_simulations(option_types,
                                                       n_paths_optionpricing,
                                                       start_price,
                                                       maturity,
@@ -203,6 +212,20 @@ if make_VG_data:
     volatility_bound = (0.05, 0.45)
     kurtosis_bound = (0.55, 0.95)
 
+    if test_data:
+        stock_price_bound = (95, 105)
+        strike_price_bound = (0.6, 1.4)
+        interest_rate_bound = (0.001, 0.03)
+        maturity_bound = (1, 50)
+
+        skewness_bound = (-0.3, -0.1)
+        volatility_bound = (0.015, 0.4)
+        kurtosis_bound = (0.6, 0.9)
+
+        seed_values += 2
+        seed_paths += 2
+
+    # for the comments in csv file
     data_boundaries = {"Stock price": stock_price_bound,
                        "Strike price": strike_price_bound,
                        "Maturity": maturity_bound,
@@ -214,8 +237,16 @@ if make_VG_data:
                        "Seed paths": seed_paths,
                        "Forward pricing": forward_pricing_VG}
 
-    column_names_values = ["stock_price", "strike_price", "strike_price_percent",
-                           "interest_rate", "skewness", "volatility", "kurtosis", "maturity", "call/put"]
+    # header in the csv file
+    column_names_values = ["stock_price",
+                           "strike_price",
+                           "strike_price_percent",
+                           "interest_rate",
+                           "skewness",
+                           "volatility",
+                           "kurtosis",
+                           "maturity",
+                           "call/put"]
 
     col_names = column_names_values + column_names_options
 
@@ -264,8 +295,8 @@ if make_VG_data:
 
         vg = VarianceGamma(interest_rate, volatility, skewn, kurtos)
 
-        # start simulation and calculation of the different options
-        dict_option_values = vg.get_price_simulations(options,
+        # start simulation and calculation of the different option_types
+        dict_option_values = vg.get_price_simulations(option_types,
                                                       n_paths_optionpricing,
                                                       start_price,
                                                       maturity,
@@ -291,9 +322,10 @@ if make_VG_data:
 ########################################################################################################################
 if make_heston_data:
     forward_pricing_heston = False
+    test_data = False
     model_name = "Heston"
 
-    file_name = create_name_file(model_name, forward_pricing_heston)
+    file_name = create_name_file(model_name, forward_pricing_heston, testing=test_data)
     seed_values = 45
     seed_paths = 76
 
@@ -314,6 +346,21 @@ if make_heston_data:
     correlation_bound = (-0.85, -0.5)
     vol_of_vol_bound = (0.45, 0.75)
 
+    if test_data:
+        stock_price_bound = (95, 105)
+        strike_price_bound = (0.6, 1.4)
+        interest_rate_bound = (0.001, 0.03)
+        maturity_bound = (1, 50)
+
+        start_volatility_bound = (0.02, 0.09)
+        long_variance_bound = (0.02, 0.09)
+        rate_revert_to_long_bound = (1.6, 2.4)
+        correlation_bound = (-0.8, -0.55)
+        vol_of_vol_bound = (0.5, 0.7)
+
+        seed_values += 2
+        seed_paths += 2
+
     # Setting values for commenting in files
     data_boundaries = {"Stock price": stock_price_bound,
                        "Strike price": strike_price_bound,
@@ -329,10 +376,17 @@ if make_heston_data:
                        "Forward pricing": forward_pricing_heston}
 
     # setting column names for the csv-file
-    column_names_values = ["stock_price", "strike_price", "strike_price_percent",
-                           "interest_rate", "maturity", "start_vol",
-                           "long_term_vol", "rate_reversion", "vol_of_vol",
-                           "correlation", "call/put"]
+    column_names_values = ["stock_price",
+                           "strike_price",
+                           "strike_price_percent",
+                           "interest_rate",
+                           "maturity",
+                           "start_vol",
+                           "long_term_vol",
+                           "rate_reversion",
+                           "vol_of_vol",
+                           "correlation",
+                           "call/put"]
 
     col_names = column_names_values + column_names_options
 
@@ -393,8 +447,8 @@ if make_heston_data:
         # making object of the Heston model
         heston = HestonModel(interest_rate, start_vol, long_variance, rate_reversion, vol_of_vol, correlation)
 
-        # start simulation and calculation of the different options
-        dict_option_values = heston.get_price_simulations(options,
+        # start simulation and calculation of the different option_types
+        dict_option_values = heston.get_price_simulations(option_types,
                                                           n_paths_optionpricing,
                                                           start_price,
                                                           maturity,

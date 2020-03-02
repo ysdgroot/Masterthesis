@@ -1,15 +1,7 @@
-from ModelsStock.BlackScholes import BlackScholes
-from ModelsStock.BlackScholes import BlackScholes
-from OptionModels.PlainVanilla import PlainVanilla
-from OptionModels.EuropeanAsian import AsianMean
-from OptionModels.EuropeanLookback import Lookback
-# from ModelsStock.VarianceGamma import VarianceGamma
-# from ModelsStock.Heston import HestonModel
-
-#
+from stockmodels import BlackScholes, VarianceGamma, HestonModel
+from options import PlainVanilla, AsianMean, Lookback
 import numpy as np
-from OptionModels.PlainVanilla import PlainVanilla
-from OptionModels.EuropeanAsian import AsianMean
+
 import timeit
 import time
 import pandas as pd
@@ -27,20 +19,22 @@ n_paths = 10000
 
 BS = BlackScholes(interest_rate, volatitlity)
 
-# Different types of options
+# Different types of option_types
 option_standard = PlainVanilla()
 option_asian = AsianMean()
 option_lookback = Lookback()
 
-options = [option_standard, option_asian, option_lookback]
+option_types = [option_standard, option_asian, option_lookback]
 option_names = ["Plainvanilla", "Asian", "Lookback"]
 
 np.random.seed(8)
-value1 = BS.get_price_simulations(options, n_paths, start_price, maturity, interest_rate, strike_price=strike_price,
+value1 = BS.get_price_simulations(option_types, n_paths, start_price, maturity, interest_rate,
+                                  strike_price=strike_price,
                                   option_type=['C', 'P'])
 
 np.random.seed(8)
-value2 = BS.get_price_simulations(options, n_paths, start_price, maturity, interest_rate, strike_price=strike_price,
+value2 = BS.get_price_simulations(option_types, n_paths, start_price, maturity, interest_rate,
+                                  strike_price=strike_price,
                                   option_type='C')
 
 print(value1)

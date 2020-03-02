@@ -55,10 +55,10 @@ class StockModel(ABC):
                     This is to reduce unnecessary RAM memory, but slower in speed.
                     If value is None, all the paths will be generated at the same time.
 
-        :return: List with all the prices (positive values) of the options.
+        :return: List with all the prices (positive values) of the option_types.
             Same length and order of the prices as the given list option_styles.
             If option_type is list (=['C','P']), then it is a dict with keys 'C' and 'P',
-                with resp. the prices of the options.
+                with resp. the prices of the option_types.
         """
 
         def partition_maker(total_number: int, value_splitter: int) -> list:

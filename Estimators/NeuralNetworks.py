@@ -1,15 +1,11 @@
-import keras
-import value as value
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
-import keras.losses as Loss
-import GeneratedData
 import numpy as np
 import pandas as pd
 import stockmodels
 import math
 from sklearn.metrics import mean_squared_error
-import ModelSaver as MS
+import modelsaver as MS
 import importlib_resources as pkg_resources
 
 ########################################################

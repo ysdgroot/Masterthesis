@@ -2,14 +2,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Which options that needs to be evaluated BS, VG, H
+# Which option_types that needs to be evaluated BS, VG, H
 evaluate_stock_model = [False, False, False]
 model_names = ["BS", "VG", "H"]
 dict_model_names = {"BS": "Black Scholes",
                     "VG": "Variance Gamma",
                     "H": "Heston"}
 
-# Which options that needs to be evaluated 'Standard', 'Asian','Lookback'
+# Which option_types that needs to be evaluated 'Standard', 'Asian','Lookback'
 evaluate_options = [True, True, True]
 option_names = ["Standard", "Asian", "Lookback"]
 

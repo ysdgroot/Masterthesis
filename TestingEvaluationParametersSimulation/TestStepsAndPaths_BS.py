@@ -33,7 +33,7 @@ number_iterations = 50
 
 BS = BlackScholes(interest_rate, volatitlity)
 
-# The different options types
+# The different option_types types
 option_standard = PlainVanilla()
 option_asian = AsianMean()
 option_lookback = Lookback()

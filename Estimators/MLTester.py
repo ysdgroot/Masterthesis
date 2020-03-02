@@ -2,17 +2,18 @@ from sklearn.model_selection import cross_val_score
 from keras.models import Sequential
 
 
-def time_to_fit(regression_model, training_data, solutions_training_data):
+def time_to_fit(regression_model, training_data: list, solutions_training_data: list):
     """
     To look how fast the training process goes for the model
 
-    :param regression_model:
-    :param training_data:
-    :param solutions_training_data:
-    :return:
+    :param regression_model: Regression Model from sklearn or the Keras
+    :param training_data: A 2D-list or pandas dataframework.
+    :param solutions_training_data: The real values of each training_data
+    :return: tuple,
+        First the fitted model
+        Second the total time consumed to fit the model.
     """
     import time
-    # TODO: documentatie
 
     if type(regression_model) == Sequential:
         print("Het is een neuraal netwerk")
@@ -25,7 +26,7 @@ def time_to_fit(regression_model, training_data, solutions_training_data):
     return model_fitted, total_time
 
 
-def performance_model(fitted_model, test_data, solutions_test_data):
+def performance_model(fitted_model, test_data: list, solutions_test_data: list):
     """
     Test the performance of the fitted model, for other data than the training data, namely test data.
     The scores are calculated for different measurements.

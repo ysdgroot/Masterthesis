@@ -45,7 +45,7 @@ strike_price = 100
 # Construction object for the Heston model
 heston = HestonModel(interest_rate, start_vol, long_var, rate_revert, vol_of_vol, correlation)
 
-# Different types of options
+# Different types of option_types
 option_standard = PlainVanilla()
 option_asian = AsianMean()
 option_lookback = Lookback()
@@ -106,7 +106,7 @@ for bool_header, bool_test, file_name, option_name in zip(write_header_to_files,
 #             # total_time += end - start
 #             total_time = end - start
 #
-#             for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
+#             for bool_test, file_name, option, opt_name in zip(do_tests, file_names, option_types, option_names):
 #                 if bool_test:
 #                     approx_call, variance = option.get_price_option(paths, maturity, interest_rate,
 #                                                                  strike_price=strike_price)

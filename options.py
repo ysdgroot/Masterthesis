@@ -39,7 +39,7 @@ class Option(ABC):
 
     def get_dict(self):
         """
-        Function to get the dictionary for the different types of options, namely call en put options.
+        Function to get the dictionary for the different types of option_types, namely call en put option_types.
         "C" stands for the call option
         "P" stands for the put option
         :return: dict with keys "C" and "P" with values the corresponding function
