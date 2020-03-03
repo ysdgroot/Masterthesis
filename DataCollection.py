@@ -9,7 +9,7 @@ make_BS_data = False
 make_VG_data = True
 make_heston_data = False
 
-n_datapoints = 50000
+n_datapoints = 10000
 
 steps_per_maturity = 200
 n_paths_optionpricing = 15000
@@ -190,7 +190,7 @@ if make_BS_data:
 ########################################################################################################################
 if make_VG_data:
     forward_pricing_VG = False
-    test_data = False
+    test_data = True
     model_name = "VG"
 
     file_name = create_name_file(model_name, forward_pricing_VG, testing=test_data)
