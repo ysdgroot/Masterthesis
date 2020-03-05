@@ -6,10 +6,10 @@ import csv
 from datetime import datetime
 
 make_BS_data = False
-make_VG_data = True
-make_heston_data = False
+make_VG_data = False
+make_heston_data = True
 
-n_datapoints = 10000
+n_datapoints = 50000
 
 steps_per_maturity = 200
 n_paths_optionpricing = 15000
