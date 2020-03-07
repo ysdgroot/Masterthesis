@@ -19,7 +19,7 @@ def save_model(model, name_dump_file):
 def upload_model(name_file):
     """
 
-    :param name_file: name of the pickle file to load
+    :param name_file: name of the pickle file to load (without '.p')
     :return: the object if there were no problems, otherwise None.
     """
     try:
