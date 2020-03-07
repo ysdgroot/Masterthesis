@@ -14,7 +14,7 @@ evaluate_options = [True, True, True]
 option_names = ["Standard", "Asian", "Lookback"]
 
 plot_mean = True
-plot_min_max = False
+plot_min_max = True
 
 plot_percentile = False
 percentile = 1
@@ -67,6 +67,9 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
     data_x = data[x_name]
     data_y = data[y_name]
 
+    legend_variables = []
+    legend_variable_names = []
+
     unique_x = data_x.unique()
 
     if restriction is not None:
@@ -84,8 +87,12 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
         for x in unique_x:
             min_line.append(np.min(data_y[data[x_name] == x]))
             max_line.append(np.max(data_y[data[x_name] == x]))
-        plt.plot(unique_x, min_line, color='green')
+        line_min, = plt.plot(unique_x, min_line, color='green')
         plt.plot(unique_x, max_line, color='green')
+
+        # the lines are the same for the minimum and maximum
+        legend_variables.append(line_min)
+        legend_variable_names.append("Minimum and maximum")
 
     if plot_percentile:
         percentile_max = 100 - percentile
@@ -94,27 +101,38 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
         for x in unique_x:
             line_min.append(np.percentile(data_y[data[x_name] == x], percentile))
             line_max.append(np.percentile(data_y[data[x_name] == x], percentile_max))
-        plt.plot(unique_x, line_min, color='orange')
+        line_min_percentile, = plt.plot(unique_x, line_min, color='orange')
         plt.plot(unique_x, line_max, color='orange')
+
+        # the lines are the same for the minimum and maximum percentile
+        legend_variables.append(line_min_percentile)
+        legend_variable_names.append(f"Percentiles {percentile} - {percentile_max}")
 
     if plot_mean:
         mean_line = []
         for x in unique_x:
             mean_line.append(np.mean(data_y[data[x_name] == x]))
-        plt.plot(unique_x, mean_line, color='red')
+        line_mean, = plt.plot(unique_x, mean_line, color='red')
+
+        legend_variables.append(line_mean)
+        legend_variable_names.append("Mean")
     # todo deze stuk code verwijderen
     # restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
     # restrictions = [("paths", i, i + 1000) for i in range(1000, 20000, 1000)]
     restrictions = [("time_step", 5, 50), ("time_step", 60, 100), ("time_step", 200, 400), ("time_step", 900, 1000)]
     # # ("time_step", 101, 300), ("time_step", 301, 600),, ("time_step", 801, 1000), ("time_step", 55, 100), ("time_step", 101, 300),
     for restrict in restrictions:
-        plt.scatter(data_x[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])],
-                    data_y[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])])
+        scat_points = plt.scatter(data_x[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])], data_y[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])])
+
+        legend_variables.append(scat_points)
+        legend_variable_names.append(f"{restrict[0]}: [{restrict[1]}-{restrict[2]}]")
 
     # plt.scatter(data_x, data_y)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+
+    plt.legend(legend_variables, legend_variable_names)
 
     plt.show()
 
