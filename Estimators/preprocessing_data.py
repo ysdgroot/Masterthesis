@@ -194,6 +194,3 @@ class DataManager:
             test_data_x = pd.DataFrame(test_data_x, columns=self.list_column_names)
 
         return test_data_x, test_data_y
-
-    def test_funct(self):
-        print('BAL')
