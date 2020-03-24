@@ -16,7 +16,7 @@ def save_model(model, name_dump_file):
         return False
 
 
-def upload_model(name_file):
+def get_model(name_file):
     """
 
     :param name_file: name of the pickle file to load (without '.p')

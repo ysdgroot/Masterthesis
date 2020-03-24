@@ -6,8 +6,8 @@ import csv
 from datetime import datetime
 
 make_BS_data = False
-make_VG_data = False
-make_heston_data = True
+make_VG_data = True
+make_heston_data = False
 
 n_datapoints = 50000
 
@@ -25,6 +25,46 @@ option_types = [PlainVanilla(), AsianMean(), Lookback(lookback_min=True), Lookba
 column_names_options = ["opt_standard", "opt_asianmean", "opt_lookbackmin", "opt_lookbackmax"]
 
 
+def write_to_file_parallel(name_file, queue):
+    """
+    Write to a file while running in parallel.
+    When simultaneously writing to the same file, some data can be lost.
+    To reduce this loss, this function can be used during the parallelization to write in a csv-file
+    :param name_file: str, with the file_names where to write (append values)
+    :param queue: Manager.Queue() (package:  multiprocessing)
+    :return: None
+    """
+    with open(name_file, 'a', newline='') as f:
+        while 1:
+            m = queue.get()
+            if m == 'kill':
+                break
+            csv.writer(f).writerow(m)
+            f.flush()
+
+
+def create_name_file(model, forward_pricing_bool=False, testing=False):
+    """
+    Function to generate a file name, for a csv object, and will be stored in the "GeneratedData" folder.
+    The name depends on model, the usage of the forward_pricing (percentage) and if the data is test/training data.
+    :param model: str, normally "BS","VG" or "H".
+                No problems will occur when using another modelname.
+    :param forward_pricing_bool: bool, True: for the usage of the forward pricing; False: otherwise
+    :param testing: bool, True: when the data is test data; False: data is training data.
+    :return: str, the file name
+            GeneratedData/Generated Data - {model} model - {date_today}{forward_bool}{test_file}.csv"
+
+        date_today = '%d-%m-%y'
+        forward_bool = (F) when 'forward_pricing_bool'=True
+        test_file = "-Test data" when 'testing'=True
+
+    """
+    date_today = datetime.now().strftime('%d-%m-%Y')
+    forward_bool = "(F)" if forward_pricing_bool else ""
+    test_file = "-Test data" if testing else ""
+    return f"GeneratedData/Generated Data - {model} model - {date_today}{forward_bool}{test_file}.csv"
+
+
 def get_comment_line(name, value):
     """
     Getting string to write a comment (starting with #) in a csv file with a value, of the form:
@@ -36,30 +76,16 @@ def get_comment_line(name, value):
     return f"# {name} : {value} \n"
 
 
-def write_to_file(filename, list_values):
-    with open(filename, 'a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(list_values)
+def write_comments(name_file, general_info, dict_data_boundaries, col_names):
+    """
+    Starting function to write the comments in the csv-file.
 
-
-def write_to_file_parallel(name_file, queue):
-    with open(name_file, 'a', newline='') as f:
-        while 1:
-            m = queue.get()
-            if m == 'kill':
-                break
-            csv.writer(f).writerow(m)
-            f.flush()
-
-
-def create_name_file(model, forward_pricing_bool, testing=False):
-    date_today = datetime.now().strftime('%d-%m-%Y')
-    forward_bool = "(F)" if forward_pricing_bool else ""
-    test_file = "-Test data" if testing else ""
-    return f"GeneratedData/Generated Data - {model} model - {date_today}{forward_bool}{test_file}.csv"
-
-
-def write_comments(name_file, general_info, dict_data_boundaries):
+    :param name_file: str, file name where to write the comments
+    :param general_info: dict, writing the general info of the simulation.
+    :param dict_data_boundaries: dict, writing the boundaries for the random selection
+    :param col_names: list(str), a list with the column names of the csv-file.
+    :return: None
+    """
     with open(name_file, 'w', newline='') as fd:
         for key, val in general_info.items():
             fd.write(get_comment_line(key, val))
@@ -83,19 +109,15 @@ if make_BS_data:
     seed_values = 3
     seed_paths = 6
 
-    stock_price_bound = (90, 110)
-    strike_price_bound = (0.4, 1.6)
-    interest_rate_bound = (0, 0.035)
-    volatility_bound = (0.01, 0.45)
-    maturity_bound = (1, 60)
+    stock_price_bound = (90, 110) if not test_data else (95, 105)
+    strike_price_bound = (0.4, 1.6) if not test_data else (0.6, 1.4)
+    interest_rate_bound = (0, 0.035) if not test_data else (0.001, 0.03)
+    maturity_bound = (1, 60) if not test_data else (1, 50)
 
+    volatility_bound = (0.01, 0.45) if not test_data else (0.015, 0.4)
+
+    # change the seeds when using test_data, so there is no interference between test and training data
     if test_data:
-        stock_price_bound = (95, 105)
-        strike_price_bound = (0.6, 1.4)
-        interest_rate_bound = (0.001, 0.03)
-        volatility_bound = (0.015, 0.4)
-        maturity_bound = (1, 50)
-
         seed_values += 2
         seed_paths += 2
 
@@ -124,9 +146,10 @@ if make_BS_data:
     col_names.append("opt_exact_standard")
 
     # write the info into the files
-    write_comments(file_name, dict_general_info, data_boundaries)
-    # ----------------------------------------------------------------------------------------------------------------------
+    write_comments(file_name, dict_general_info, data_boundaries, col_names=col_names)
+    # ------------------------------------------------------------------------------------------------------------------
 
+    # generating random values
     random_values = BlackScholes.generate_random_variables(n_datapoints,
                                                            stock_price_bound,
                                                            strike_price_bound,
@@ -146,7 +169,9 @@ if make_BS_data:
     # strike prices depends if usage of the forward pricing
     strike_prices = random_values["strike_price"]
 
+
     # for parallelization
+    # start collection datapoints
     def calculate_save_price_bs(position, queue):
         print(f"BS Datapoint {position}")
 
@@ -190,7 +215,7 @@ if make_BS_data:
 ########################################################################################################################
 if make_VG_data:
     forward_pricing_VG = False
-    test_data = True
+    test_data = False
     model_name = "VG"
 
     file_name = create_name_file(model_name, forward_pricing_VG, testing=test_data)
@@ -203,25 +228,17 @@ if make_VG_data:
         seed_paths += 1
 
     # Setting boundaries for each parameter of the Variance Gamma model.
-    stock_price_bound = (90, 110)
-    strike_price_bound = (0.4, 1.6)
-    interest_rate_bound = (0.01, 0.035)
-    maturity_bound = (1, 60)
+    stock_price_bound = (90, 110) if not test_data else (95, 105)
+    strike_price_bound = (0.4, 1.6) if not test_data else (0.6, 1.4)
+    interest_rate_bound = (0, 0.035) if not test_data else (0.001, 0.03)
+    maturity_bound = (1, 60) if not test_data else (1, 50)
 
-    skewness_bound = (-0.35, -0.05)
-    volatility_bound = (0.05, 0.45)
-    kurtosis_bound = (0.55, 0.95)
+    skewness_bound = (-0.35, -0.05) if not test_data else (-0.3, -0.1)
+    volatility_bound = (0.05, 0.45) if not test_data else (0.015, 0.4)
+    kurtosis_bound = (0.55, 0.95) if not test_data else (0.6, 0.9)
 
+    # change the seeds when using test_data, so there is no interference between test and training data
     if test_data:
-        stock_price_bound = (95, 105)
-        strike_price_bound = (0.6, 1.4)
-        interest_rate_bound = (0.001, 0.03)
-        maturity_bound = (1, 50)
-
-        skewness_bound = (-0.3, -0.1)
-        volatility_bound = (0.015, 0.4)
-        kurtosis_bound = (0.6, 0.9)
-
         seed_values += 2
         seed_paths += 2
 
@@ -251,9 +268,10 @@ if make_VG_data:
     col_names = column_names_values + column_names_options
 
     # write the info into the files
-    write_comments(file_name, dict_general_info, data_boundaries)
-    # ----------------------------------------------------------------------------------------------------------------------
+    write_comments(file_name, dict_general_info, data_boundaries, col_names=col_names)
+    # ------------------------------------------------------------------------------------------------------------------
 
+    # generating random values
     random_values = VarianceGamma.generate_random_variables(n_datapoints,
                                                             stock_price_bound,
                                                             strike_price_bound,
@@ -277,7 +295,6 @@ if make_VG_data:
     skewness = random_values["skewness"]
     volatilities = random_values["volatility"]
     kurtosis = random_values["kurtosis"]
-
 
     # for parallelization
     # start collection datapoints
@@ -323,7 +340,7 @@ if make_VG_data:
 if make_heston_data:
     forward_pricing_heston = False
     test_data = False
-    model_name = "Heston"
+    model_name = "H"
 
     file_name = create_name_file(model_name, forward_pricing_heston, testing=test_data)
     seed_values = 45
@@ -335,29 +352,19 @@ if make_heston_data:
         seed_paths += 1
 
     # set the boundaries for each parameter
-    stock_price_bound = (90, 110)
-    strike_price_bound = (0.4, 1.6)
-    interest_rate_bound = (0.01, 0.035)
-    maturity_bound = (1, 60)
+    stock_price_bound = (90, 110) if not test_data else (95, 105)
+    strike_price_bound = (0.4, 1.6) if not test_data else (0.6, 1.4)
+    interest_rate_bound = (0, 0.035) if not test_data else (0.001, 0.03)
+    maturity_bound = (1, 60) if not test_data else (1, 50)
 
-    start_volatility_bound = (0.01, 0.1)
-    long_variance_bound = (0.01, 0.1)
-    rate_revert_to_long_bound = (1.4, 2.6)
-    correlation_bound = (-0.85, -0.5)
-    vol_of_vol_bound = (0.45, 0.75)
+    start_volatility_bound = (0.01, 0.1) if not test_data else (0.02, 0.09)
+    long_variance_bound = (0.01, 0.1) if not test_data else (0.02, 0.09)
+    rate_revert_to_long_bound = (1.4, 2.6) if not test_data else (1.6, 2.4)
+    correlation_bound = (-0.85, -0.5) if not test_data else (-0.8, -0.55)
+    vol_of_vol_bound = (0.45, 0.75) if not test_data else (0.5, 0.7)
 
+    # change the seeds when using test_data, so there is no interference between test and training data
     if test_data:
-        stock_price_bound = (95, 105)
-        strike_price_bound = (0.6, 1.4)
-        interest_rate_bound = (0.001, 0.03)
-        maturity_bound = (1, 50)
-
-        start_volatility_bound = (0.02, 0.09)
-        long_variance_bound = (0.02, 0.09)
-        rate_revert_to_long_bound = (1.6, 2.4)
-        correlation_bound = (-0.8, -0.55)
-        vol_of_vol_bound = (0.5, 0.7)
-
         seed_values += 2
         seed_paths += 2
 
@@ -391,10 +398,10 @@ if make_heston_data:
     col_names = column_names_values + column_names_options
 
     # write the info into the files
-    write_comments(file_name, dict_general_info, data_boundaries)
-    # ----------------------------------------------------------------------------------------------------------------------
+    write_comments(file_name, dict_general_info, data_boundaries, col_names=col_names)
+    # ------------------------------------------------------------------------------------------------------------------
 
-    # creation of random values for the Heston Model
+    # generating random values
     random_values = HestonModel.generate_random_variables(n_datapoints,
                                                           stock_price_bound,
                                                           strike_price_bound,
@@ -477,7 +484,7 @@ if make_heston_data:
 def main_bs():
     manager = Manager()
     queue = manager.Queue()
-    pool = Pool(5)
+    pool = Pool(7)
 
     # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
@@ -497,7 +504,7 @@ def main_bs():
 def main_vg():
     manager = Manager()
     queue = manager.Queue()
-    pool = Pool(5)
+    pool = Pool(6)
 
     # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
@@ -517,7 +524,7 @@ def main_vg():
 def main_h():
     manager = Manager()
     queue = manager.Queue()
-    pool = Pool(5)
+    pool = Pool(6)
 
     # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))

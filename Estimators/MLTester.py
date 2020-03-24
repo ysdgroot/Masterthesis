@@ -1,5 +1,5 @@
 from sklearn.model_selection import cross_val_score
-from keras.models import Sequential
+# from keras.models import Sequential
 
 
 def time_to_fit(regression_model, training_data: list, solutions_training_data: list):
@@ -15,8 +15,8 @@ def time_to_fit(regression_model, training_data: list, solutions_training_data: 
     """
     import time
 
-    if type(regression_model) == Sequential:
-        print("Het is een neuraal netwerk")
+    # if type(regression_model) == Sequential:
+    #     print("Het is een neuraal netwerk")
 
     start = time.time()
     model_fitted = regression_model.fit(training_data, solutions_training_data)
@@ -55,3 +55,16 @@ def performance_model(fitted_model, test_data: list, solutions_test_data: list):
     return score, [mse, rmse, absolute_error, max_er]
 
 
+import modelsaver
+import Estimators.preprocessing_data as prep
+from sklearn.metrics import mean_squared_error
+
+model = modelsaver.get_model("RF_randomsearch_3")
+X_test, y_test = prep.DataManager("BS").get_test_data()
+del X_test["strike_price_percent"]
+
+# print(model.cv_results_)
+
+pred = model.predict(X_test)
+
+print(mean_squared_error(y_test, pred))

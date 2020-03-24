@@ -61,7 +61,6 @@ def get_filename(model, option_type):
     return f'Datafiles/{dict_model_names[model]}/Test-steps and accuracy-{model}-{option_type}.csv'
 
 
-# todo toevoegen van een legende
 def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_max=False, plot_mean=False,
                          restriction=None, plot_percentile=False, percentile=1):
     data_x = data[x_name]
@@ -137,6 +136,61 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
     plt.show()
 
 
+def test_bar_plot(data,
+                  title="",
+                  xlabel="",
+                  ylabel="",
+                  n_splits=4):
+    x_name = "time_step"
+    y_name = "option_price"
+
+    x_name = "paths"
+
+    data_x = data[x_name]
+    data_y = data[y_name]
+
+    labels = data_x.unique() // 1000
+
+    list_mean_1 = []
+    list_mean_2 = []
+    list_mean_3 = []
+    list_mean_4 = []
+
+    for time_step in data_x.unique():
+        positions_time_step = data_x == time_step
+
+        # list_mean_1.append(np.var(data_y[positions_time_step & (data["paths"] >= 1000) & (data["paths"] <= 5000)]))
+        # list_mean_2.append(np.var(data_y[positions_time_step & (data["paths"] >= 6000) & (data["paths"] <= 10000)]))
+        # list_mean_3.append(np.var(data_y[positions_time_step & (data["paths"] >= 11000) & (data["paths"] <= 15000)]))
+        # list_mean_4.append(np.var(data_y[positions_time_step & (data["paths"] >= 16000) & (data["paths"] <= 20000)]))
+
+        list_mean_1.append(np.var(data_y[positions_time_step & (data["time_step"] >= 5) & (data["time_step"] <= 20)]))
+        list_mean_2.append(np.var(data_y[positions_time_step & (data["time_step"] >= 5) & (data["time_step"] <= 50)]))
+        list_mean_3.append(np.var(data_y[positions_time_step & (data["time_step"] >= 55) & (data["time_step"] <= 75)]))
+        list_mean_4.append(
+            np.var(data_y[positions_time_step & (data["time_step"] >= 900) & (data["time_step"] <= 1000)]))
+
+    x = np.arange(len(labels))  # the label locations
+    width = 0.2  # the width of the bars
+
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - 3 * width / 2, list_mean_1, width, label='klasse 1')
+    rects2 = ax.bar(x - width / 2, list_mean_2, width, label='klasse 2')
+    rects3 = ax.bar(x + width / 2, list_mean_3, width, label='klasse 3')
+    rects4 = ax.bar(x + 3 * width / 2, list_mean_4, width, label='klasse 4')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Option price')
+    ax.set_xlabel('Number of paths')
+    ax.set_title('Performance')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    # ax.set_ylim([31, 35])
+
+    plt.show()
+
+
 ########################################################################################################################
 
 
@@ -190,6 +244,8 @@ data_options2 = read_data(file_name_2)
 # new_data = data_options.append(data_options2)
 new_data = data_options
 
+test_bar_plot(new_data)
+
 # print(new_data)
 
 x_name = "paths"
@@ -202,16 +258,16 @@ x_name = "paths"
 
 # restriction = ("time_step", 5, 100)
 
-plot_change_variance(new_data, x_name,
-                     y_name,
-                     title=title_plot.format(option, dict_model_names[model]),
-                     xlabel=x_label,
-                     ylabel=y_label,
-                     plot_mean=plot_mean,
-                     plot_min_max=plot_min_max,
-                     plot_percentile=False,
-                     percentile=percentile,
-                     restriction=restriction)
+# plot_change_variance(new_data, x_name,
+#                      y_name,
+#                      title=title_plot.format(option, dict_model_names[model]),
+#                      xlabel=x_label,
+#                      ylabel=y_label,
+#                      plot_mean=plot_mean,
+#                      plot_min_max=plot_min_max,
+#                      plot_percentile=False,
+#                      percentile=percentile,
+#                      restriction=restriction)
 
 # unique_time_steps = data_options["time_step"].unique()
 # unique_paths = data_options["paths"].unique()

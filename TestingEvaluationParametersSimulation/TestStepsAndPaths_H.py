@@ -5,7 +5,6 @@ import csv
 import numpy as np
 from multiprocessing import Manager, Pool
 
-# todo: maak deze file nog algemener, want er is niet zoveel verschil met de andere files (niet dringend)
 # Testing paths
 # time_steps_per_maturities = [i for i in range(500, 1001, 100)]
 # amount_paths = [i for i in range(1000, 20001, 1000)]
