@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import numpy as np
-import options as opt
 from scipy.stats import norm
 
 
@@ -16,7 +15,7 @@ class StockModel(ABC):
         pass
 
     def get_price_simulations(self,
-                              option_styles: opt.Option,
+                              option_styles,
                               amount_paths: int,
                               start_price: float,
                               maturity: int,

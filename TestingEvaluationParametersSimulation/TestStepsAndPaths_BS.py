@@ -6,7 +6,6 @@ from multiprocessing import Manager, Pool
 
 # Testing paths
 time_steps_per_maturities = [j for j in range(5, 100, 5)] + [i for i in range(100, 1001, 100)]
-# time_steps_per_maturities = [i for i in range(5, 100, 5)]
 amount_paths = [i for i in range(1000, 20001, 1000)]
 
 write_header_to_files = [True, True, True]
@@ -75,7 +74,6 @@ for bool_header, bool_test, file_n, option_n, is_standard in zip(write_header_to
         write_comment_info_and_header(file_n, option_n, plain_vanilla_option=is_standard)
 
 
-# todo code aanpassen om minder RAM te verbruiken
 def func_time_step(amount, queue):
     for time_step in time_steps_per_maturities:
         print(f"Amount {amount}, timestep = {time_step} ")

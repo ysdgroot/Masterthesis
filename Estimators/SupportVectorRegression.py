@@ -1,63 +1,102 @@
-import random
-import math
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.svm import SVR
+from sklearn.svm import LinearSVR
+from sklearn.kernel_approximation import Nystroem
 from sklearn.metrics import mean_squared_error
-import time
-import pickle
-
-import ModelsStock.BlackScholes as BS
+from Estimators import preprocessing_data as prep
+from scipy.stats import uniform
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+import modelsaver
 
 ########################################################
-#---------------- PARAMETERS --------------------------#
+# ---------------- PARAMETERS --------------------------#
 ########################################################
 # SVR, linearSVR, NUSVR
 # linearSVR -> larger datasets (notes on scikit-learn)
-kernels = ["rbf", "linear", "poly", "rbf", "sigmoid"]
-degree = [i for i in range(1, 11, 1)]   # only for the kernel "poly"
+kernels = ["rbf", "laplacian", "poly", "sigmoid"]
 
-gamma = ["scale", "auto"]   # kernel coefficient for 'rbf', 'poly' and 'sigmoid'
+# gamma = ["scale", "auto"]  # kernel coefficient for 'rbf', 'poly' and 'sigmoid'
+gamma = [0.01, 0.001, 0.0001]
+degree = [2, 3, 4, 5]
+dual = False  # n_samples > n_features
 
-C = 1               # float, TODO: take random value,
-epsilon = 0.1       # float, TODO: take random value,
+distributions = dict(C=uniform(loc=1, scale=50),
+                     kernel=["rbf", "linear", "poly", "sigmoid"],
+                     degree=[1, 2, 3, 4, 5],
+                     gamma=["scale", "auto"],
+                     shrinking=[True, False])
+
+# todo: Nystroem gebruiken met een lineaire SVR, anders zal het veel te lang duren om alles te doen.
+
+# param_grid = [{'C': [1, 10, 100, 1000], 'gamma': [0.01, 0.001, 0.0001], 'kernel': ['rbf'], 'tol':[0.01]},
+#               {'C': [1, 10, 100, 1000], 'degree':[2, 3, 4, 5], 'gamma': [0.01, 0.001, 0.0001], 'kernel': ['ploy'], 'tol':[0.01]},
+#               {'C': [1, 10, 100, 1000], 'gamma': [0.01, 0.001, 0.0001], 'kernel': ['sigmoid'], 'tol':[0.01]}]
+
 
 ########################################################################################################################
 
+datamanager = prep.DataManager(column_fitting="opt_exact_standard")
+# datamanager = prep.DataManager(column_fitting="opt_asianmean")
+X, y = datamanager.get_training_data()
+del X["strike_price_percent"]
 
-np.random.seed(123)
+feature_map = Nystroem(kernel="laplacian",
+                       gamma=0.01,
+                       n_components=1000,
+                       random_state=2)
 
-data = BS.get_random_data_and_solutions('C', 10000, [80, 120], [0.01, 0.03], [0.01, 0.2], [0.25, 5], [70, 130])
-print('End new data')
+transformed_data = feature_map.fit_transform(X, y)
+lin_svr = LinearSVR(C=100,
+                    verbose=1,
+                    max_iter=10000)
 
-X = data.drop('Value_option', axis=1)
-y = data['Value_option']
+lin_svr.fit(transformed_data, y)
+print(f"Score = {mean_squared_error(y, lin_svr.predict(transformed_data))}")
 
+X_test, y_test = datamanager.get_test_data()
+del X_test["strike_price_percent"]
 
-# Start creating of model
-model = SVR(C=3.0, cache_size=200, coef0=0.0, degree=4, epsilon=0.1, gamma='auto',
-  kernel='rbf', max_iter=-1, shrinking=True, tol=0.0001, verbose=False)
+transformed_data_test = feature_map.transform(X_test)
 
-start = time.time()
-model_svr = model.fit(X,  y)
-end = time.time()
-print('Time: ' + str(end - start))
+print(f"Score test= {mean_squared_error(y_test, lin_svr.predict(transformed_data_test))}")
+# svr = SVR(verbose=1)
 
-pickle.dump(model_svr, "SVR_rbf_4")
-
-data_test = BS.get_random_data_and_solutions('C', 1000, [90, 110], [0.01, 0.03], [0.01, 0.2], [0.25, 5], [80, 120])
-X_test = data_test.drop('Value_option', axis=1)
-y_test = data_test['Value_option']
+# search = svr.fit(X, y)
 
 
-pred_y = model_svr.predict(X_test)
+# search = GridSearchCV(svr, param_grid, cv=5, n_jobs=7)
+# search.fit(X, y)
 
-score = model_svr.score(X_test, y_test)
-print(score)
+# modelsaver.save_model(search, "SVR_gridsearch")
 
-mse = mean_squared_error(y_test, pred_y)
-print("Mean Squared Error:", mse)
+# print(search.cv_results_)
+# print(search.best_params_)
+# print(search.best_score_)
 
-rmse = math.sqrt(mse)
-print("Root Mean Squared Error:", rmse)
 
+# pred = search.predict(X_test)
+# mse = mean_squared_error(y_test, pred)
+# print(f'MSE test (best) {mse}')
+
+# for kernel in kernels:
+#     print(f"Kernel: {kernel}")
+#
+#     start = time.perf_counter()
+#     model_svr = LinearSVR(C=3.0,
+#                           dual=False,
+#                           cache_size=400,
+#                           coef0=0.0,
+#                           degree=6,
+#                           epsilon=0.1,
+#                           gamma='scale',
+#                           kernel=kernel,
+#                           max_iter=-1,
+#                           shrinking=True,
+#                           tol=0.0001).fit(X, y)
+#     end = time.perf_counter()
+#
+#     print('Time: ' + str(end - start))
+#
+#     score_eval_train = model_svr.score(X, y)
+#     print(f"Evaluation {score_eval_train}")
+#
+#     prediction = model_svr.predict(X_test)
+#     print(mean_squared_error(prediction, y_test))
