@@ -19,11 +19,14 @@ def save_model(model, name_dump_file):
 def get_model(name_file):
     """
 
-    :param name_file: name of the pickle file to load (without '.p')
+    :param name_file: name of the pickle file to load
     :return: the object if there were no problems, otherwise None.
     """
     try:
-        file = str(name_file) + ".p"
+        if name_file.endswith(".p"):
+            file = name_file
+        else:
+            file = str(name_file) + ".p"
         obj = pickle.load(open(file, "rb"))
         return obj
     except IOError:
