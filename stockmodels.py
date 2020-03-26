@@ -413,13 +413,12 @@ class VarianceGamma(StockModel):
 
     def __init__(self, interest_rate: float, volatility: float, skewness: float, kurtosis: float):
         """
-
         :param interest_rate:Positive float.
                             The risk-free interest rate, per time maturity.
-        :param skewness: (parameter 'theta') float.
-                    The implied skewness for the Variance Gamma process.
         :param volatility: (parameter 'sigma') Positive float.
                     The implied volatility for the Variance Gamma process.
+        :param skewness: (parameter 'theta') float.
+                    The implied skewness for the Variance Gamma process.
         :param kurtosis: (parameter 'nu') Positive float.
                     The implied kurtosis for the Variance Gamma process.
         """
