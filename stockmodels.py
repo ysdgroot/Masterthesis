@@ -28,7 +28,7 @@ class StockModel(ABC):
         """
         The stock_paths will be generated of the object on which this method is called.
 
-        :param option_styles: A list of class OptionStyle.
+        :param option_styles: A list of class OptionStyle or single Object instance of 'Option'
         :param amount_paths: Positive integer.
                             This is the total number of paths generated.
         :param start_price: Positive float.
@@ -54,7 +54,7 @@ class StockModel(ABC):
                     This is to reduce unnecessary RAM memory, but slower in speed.
                     If value is None, all the paths will be generated at the same time.
 
-        :return: List with all the prices (positive values) of the option_types.
+        :return: List with all the prices (positive values) of the option_styles.
             Same length and order of the prices as the given list option_styles.
             If option_type is list (=['C','P']), then it is a dict with keys 'C' and 'P',
                 with resp. the prices of the option_types.
@@ -108,29 +108,41 @@ class StockModel(ABC):
                                                 maturity,
                                                 steps_per_maturity=steps_per_maturity)
 
+            # Iterating for each Option style (Plain vanilla or AsianMean, ...)
             for option_style in option_styles:
+                # Check if the option_type (call or put) is a single value or list, then it makes a dict
                 if type(option_type) is list:
                     for opt_type in option_type:
+                        # get a dictionary when starting
                         correct_dict_paths = dict_values_list.get(opt_type, dict())
 
+                        # make a list for each option_style (call and put)
                         prices_option_paths = correct_dict_paths.get(str(option_style), [])
+                        # get the prices of the option for each simulated path
                         new_prices = option_style.get_prices_per_path(simulations,
                                                                       maturity,
                                                                       interest_rate,
                                                                       option_type=opt_type,
                                                                       strike_price=strike_price)
                         prices_option_paths.extend(new_prices)
+
+                        print(f"{opt_type} max waarde {np.max(new_prices)}")
+                        print(f"waarden {np.where(new_prices > 1000000)}")
+
                         correct_dict_paths[str(option_style)] = prices_option_paths
 
                         dict_values_list[opt_type] = correct_dict_paths
                 else:
+                    # when there is only 1 option_type (call or put), just make a list for each option_style.
                     prices_option_paths = dict_paths.get(str(option_style), [])
                     new_prices = option_style.get_prices_per_path(simulations,
                                                                   maturity,
                                                                   interest_rate,
                                                                   option_type=option_type,
                                                                   strike_price=strike_price)
+
                     prices_option_paths.extend(new_prices)
+
                     dict_paths[str(option_style)] = prices_option_paths
 
         # set everything in the correct structure to return
@@ -488,6 +500,20 @@ class VarianceGamma(StockModel):
         # Adding 0 in the first column, so the first column (first value of the paths) will be the start price
         first_column = np.zeros((amount_paths, 1))
         total_exponent = np.append(first_column, total_exponent, axis=1)
+
+        # todo dit verwijderen!!!!
+        # import matplotlib.pyplot as plt
+        #
+        # waarden = start_price * np.exp(total_exponent)
+        # rij = waarden[4871:4876]
+        #
+        # plt.plot(range(number_of_evaluations+1), rij[0])
+        # plt.plot(range(number_of_evaluations + 1), rij[1])
+        # plt.plot(range(number_of_evaluations + 1), rij[2])
+        # plt.plot(range(number_of_evaluations + 1), rij[3])
+        # plt.plot(range(number_of_evaluations+1), rij[4])
+        #
+        # plt.show()
 
         return start_price * np.exp(total_exponent)
 
