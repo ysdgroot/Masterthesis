@@ -126,9 +126,6 @@ class StockModel(ABC):
                                                                       strike_price=strike_price)
                         prices_option_paths.extend(new_prices)
 
-                        print(f"{opt_type} max waarde {np.max(new_prices)}")
-                        print(f"waarden {np.where(new_prices > 1000000)}")
-
                         correct_dict_paths[str(option_style)] = prices_option_paths
 
                         dict_values_list[opt_type] = correct_dict_paths
@@ -500,20 +497,6 @@ class VarianceGamma(StockModel):
         # Adding 0 in the first column, so the first column (first value of the paths) will be the start price
         first_column = np.zeros((amount_paths, 1))
         total_exponent = np.append(first_column, total_exponent, axis=1)
-
-        # todo dit verwijderen!!!!
-        # import matplotlib.pyplot as plt
-        #
-        # waarden = start_price * np.exp(total_exponent)
-        # rij = waarden[4871:4876]
-        #
-        # plt.plot(range(number_of_evaluations+1), rij[0])
-        # plt.plot(range(number_of_evaluations + 1), rij[1])
-        # plt.plot(range(number_of_evaluations + 1), rij[2])
-        # plt.plot(range(number_of_evaluations + 1), rij[3])
-        # plt.plot(range(number_of_evaluations+1), rij[4])
-        #
-        # plt.show()
 
         return start_price * np.exp(total_exponent)
 
