@@ -5,9 +5,20 @@ import numpy as np
 import csv
 from datetime import datetime
 
+# BS model
 make_BS_data = False
-make_VG_data = True
-make_heston_data = False
+forward_pricing_BS = False
+test_data_bs = False
+
+# VG model
+make_VG_data = False
+forward_pricing_VG = False
+test_data_vg = False
+
+# Heston model
+make_heston_data = True
+forward_pricing_heston = False
+test_data_h = False
 
 n_datapoints = 50000
 
@@ -100,24 +111,24 @@ def write_comments(name_file, general_info, dict_data_boundaries, col_names):
 # ------------------------------- Black Scholes -----------------------------------------------------------------------#
 ########################################################################################################################
 if make_BS_data:
-    forward_pricing_BS = False
-    test_data = True
+
     model_name = "BS"
 
-    file_name = create_name_file(model_name, forward_pricing_BS, testing=test_data)
+    file_name = create_name_file(model_name, forward_pricing_BS, testing=test_data_bs)
 
     seed_values = 3
     seed_paths = 6
 
-    stock_price_bound = (90, 110) if not test_data else (95, 105)
-    strike_price_bound = (0.4, 1.6) if not test_data else (0.6, 1.4)
-    interest_rate_bound = (0, 0.035) if not test_data else (0.001, 0.03)
-    maturity_bound = (1, 60) if not test_data else (1, 50)
+    stock_price_bound = (90, 110) if not test_data_bs else (95, 105)
+    strike_price_bound = (0.4, 1.6) if not test_data_bs else (0.6, 1.4)
+    interest_rate_bound = (0, 0.035) if not test_data_bs else (0.001, 0.03)
+    # maturity_bound = (1, 60) if not test_data else (1, 50)
+    maturity_bound = (1, 25) if not test_data_bs else (1, 21)
 
-    volatility_bound = (0.01, 0.45) if not test_data else (0.015, 0.4)
+    volatility_bound = (0.01, 0.45) if not test_data_bs else (0.015, 0.4)
 
     # change the seeds when using test_data, so there is no interference between test and training data
-    if test_data:
+    if test_data_bs:
         seed_values += 2
         seed_paths += 2
 
@@ -140,7 +151,7 @@ if make_BS_data:
                            "maturity",
                            "call/put"]
 
-    col_names = column_names_values + column_names_options
+    col_names = ["seed"] + column_names_values + column_names_options
 
     # adding last column for the theoretical value of the option, only for BS model
     col_names.append("opt_exact_standard")
@@ -201,7 +212,8 @@ if make_BS_data:
                                                       max_path_generated=max_path_generated)
 
         # write datapoints in the csv-file
-        values_rand = [start_price, strike_price, strike_price_perc, interest_rate, vol, maturity]
+        values_rand = [seed_paths + position] + [start_price, strike_price, strike_price_perc, interest_rate, vol,
+                                                 maturity]
 
         values_call = values_rand + ['C'] + dict_option_values['C'] + [exact_value_call]
         values_put = values_rand + ['P'] + dict_option_values['P'] + [exact_value_put]
@@ -214,11 +226,9 @@ if make_BS_data:
 # ------------------------------- Variance Gamma ----------------------------------------------------------------------#
 ########################################################################################################################
 if make_VG_data:
-    forward_pricing_VG = False
-    test_data = False
     model_name = "VG"
 
-    file_name = create_name_file(model_name, forward_pricing_VG, testing=test_data)
+    file_name = create_name_file(model_name, forward_pricing_VG, testing=test_data_vg)
     seed_values = 53
     seed_paths = 84
 
@@ -228,17 +238,18 @@ if make_VG_data:
         seed_paths += 1
 
     # Setting boundaries for each parameter of the Variance Gamma model.
-    stock_price_bound = (90, 110) if not test_data else (95, 105)
-    strike_price_bound = (0.4, 1.6) if not test_data else (0.6, 1.4)
-    interest_rate_bound = (0, 0.035) if not test_data else (0.001, 0.03)
-    maturity_bound = (1, 60) if not test_data else (1, 50)
+    stock_price_bound = (90, 110) if not test_data_vg else (95, 105)
+    strike_price_bound = (0.4, 1.6) if not test_data_vg else (0.6, 1.4)
+    interest_rate_bound = (0, 0.035) if not test_data_vg else (0.001, 0.03)
+    # maturity_bound = (1, 60) if not test_data_vg else (1, 50)
+    maturity_bound = (1, 25) if not test_data_vg else (1, 21)
 
-    skewness_bound = (-0.35, -0.05) if not test_data else (-0.3, -0.1)
-    volatility_bound = (0.05, 0.45) if not test_data else (0.015, 0.4)
-    kurtosis_bound = (0.55, 0.95) if not test_data else (0.6, 0.9)
+    skewness_bound = (-0.35, -0.05) if not test_data_vg else (-0.3, -0.1)
+    volatility_bound = (0.05, 0.45) if not test_data_vg else (0.015, 0.4)
+    kurtosis_bound = (0.55, 0.95) if not test_data_vg else (0.6, 0.9)
 
     # change the seeds when using test_data, so there is no interference between test and training data
-    if test_data:
+    if test_data_vg:
         seed_values += 2
         seed_paths += 2
 
@@ -265,7 +276,7 @@ if make_VG_data:
                            "maturity",
                            "call/put"]
 
-    col_names = column_names_values + column_names_options
+    col_names = ["seed"] + column_names_values + column_names_options
 
     # write the info into the files
     write_comments(file_name, dict_general_info, data_boundaries, col_names=col_names)
@@ -325,7 +336,8 @@ if make_VG_data:
                                                       max_path_generated=max_path_generated)
 
         # write datapoints in the csv-file
-        values = [start_price, strike_price, strike_price_perc, interest_rate, skewn, volatility, kurtos, maturity]
+        values = [seed_paths + position] + \
+                 [start_price, strike_price, strike_price_perc, interest_rate, skewn, volatility, kurtos, maturity]
 
         values_call = values + ['C'] + dict_option_values['C']
         values_put = values + ['P'] + dict_option_values['P']
@@ -338,11 +350,9 @@ if make_VG_data:
 # ------------------------------- Heston Model ------------------------------------------------------------------------#
 ########################################################################################################################
 if make_heston_data:
-    forward_pricing_heston = False
-    test_data = False
     model_name = "H"
 
-    file_name = create_name_file(model_name, forward_pricing_heston, testing=test_data)
+    file_name = create_name_file(model_name, forward_pricing_heston, testing=test_data_h)
     seed_values = 45
     seed_paths = 76
 
@@ -352,19 +362,20 @@ if make_heston_data:
         seed_paths += 1
 
     # set the boundaries for each parameter
-    stock_price_bound = (90, 110) if not test_data else (95, 105)
-    strike_price_bound = (0.4, 1.6) if not test_data else (0.6, 1.4)
-    interest_rate_bound = (0, 0.035) if not test_data else (0.001, 0.03)
-    maturity_bound = (1, 60) if not test_data else (1, 50)
+    stock_price_bound = (90, 110) if not test_data_h else (95, 105)
+    strike_price_bound = (0.4, 1.6) if not test_data_h else (0.6, 1.4)
+    interest_rate_bound = (0, 0.035) if not test_data_h else (0.001, 0.03)
+    # maturity_bound = (1, 60) if not test_data_h else (1, 50)
+    maturity_bound = (1, 25) if not test_data_h else (1, 21)
 
-    start_volatility_bound = (0.01, 0.1) if not test_data else (0.02, 0.09)
-    long_variance_bound = (0.01, 0.1) if not test_data else (0.02, 0.09)
-    rate_revert_to_long_bound = (1.4, 2.6) if not test_data else (1.6, 2.4)
-    correlation_bound = (-0.85, -0.5) if not test_data else (-0.8, -0.55)
-    vol_of_vol_bound = (0.45, 0.75) if not test_data else (0.5, 0.7)
+    start_volatility_bound = (0.01, 0.1) if not test_data_h else (0.02, 0.09)
+    long_variance_bound = (0.01, 0.1) if not test_data_h else (0.02, 0.09)
+    rate_revert_to_long_bound = (1.4, 2.6) if not test_data_h else (1.6, 2.4)
+    correlation_bound = (-0.85, -0.5) if not test_data_h else (-0.8, -0.55)
+    vol_of_vol_bound = (0.45, 0.75) if not test_data_h else (0.5, 0.7)
 
     # change the seeds when using test_data, so there is no interference between test and training data
-    if test_data:
+    if test_data_h:
         seed_values += 2
         seed_paths += 2
 
@@ -395,7 +406,7 @@ if make_heston_data:
                            "correlation",
                            "call/put"]
 
-    col_names = column_names_values + column_names_options
+    col_names = ["seed"] + column_names_values + column_names_options
 
     # write the info into the files
     write_comments(file_name, dict_general_info, data_boundaries, col_names=col_names)
@@ -467,7 +478,8 @@ if make_heston_data:
                                                           max_path_generated=max_path_generated)
 
         # write datapoints in the csv-file
-        values = [start_price, strike_price, strike_price_perc, interest_rate, maturity]
+        values = [seed_paths + position] + \
+                 [start_price, strike_price, strike_price_perc, interest_rate, maturity]
 
         values += [start_vol, long_variance, rate_reversion, vol_of_vol, correlation]
 
@@ -524,7 +536,7 @@ def main_vg():
 def main_h():
     manager = Manager()
     queue = manager.Queue()
-    pool = Pool(6)
+    pool = Pool(5)
 
     # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (file_name, queue))
