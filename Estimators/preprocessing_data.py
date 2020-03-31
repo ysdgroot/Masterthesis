@@ -10,7 +10,8 @@ class DataManager:
                  replace_call_put=True,
                  call_put=(1, -1),
                  only_call=False,
-                 list_column_names=None):
+                 list_column_names=None,
+                 shuffle_data=False):
         """
         :param model:str (default="BS", values in ["BS", "VG", "H"]
         :param column_fitting: str (default="opt_standard"), standard values are
@@ -25,6 +26,7 @@ class DataManager:
         :param only_call: bool (default=False), if you only need the call_options
         :param list_column_names: list[str] (default=None), if a specific column set is necessary as training data.
                                 If None, all the columns will be given.
+        :param shuffle_data: bool (default=False), whenever the data needs to be shuffled.
         """
         self.replace_call_put = replace_call_put
         self.call_put = call_put
@@ -68,6 +70,7 @@ class DataManager:
         self.test_file_name = self.get_correct_file(self.model, test=True)
 
         self.only_call = only_call
+        self.shuffle_data = shuffle_data
 
     def func_replace_call_put(self, df):
         """
@@ -88,11 +91,9 @@ class DataManager:
         :param test: bool (default: False), if the file is test data or not
         :return: full path name of the file
         """
-        # todo: dit veranderen zodat het algemeen wordt + de namen van de files veranderen
-        # f"Gen_{'test_' if test else ''}data-{model}{'' if test else '-50k'}.csv"
         try:
             file = pkg_resources.open_text(GeneratedData,
-                                           f"Generated Data - {model} model -{'Test data' if test else '50k'}.csv")
+                                           f"generateddata-{model}-{'testing' if test else 'training'}.csv")
             # data_folder = Path('C:/Users/Yucatan De Groote/Documents/Universiteit/Masterproef/GeneratedData')
             return file.name
         except FileNotFoundError:
@@ -148,6 +149,9 @@ class DataManager:
         # read the csv files
         training_data = pd.read_csv(self.training_file_name, comment='#', header=0)
 
+        if self.shuffle_data:
+            training_data = training_data.sample(frac=1).reset_index(drop=True)
+
         # replacing the values for call-put
         self.func_replace_call_put(training_data)
 
@@ -194,3 +198,13 @@ class DataManager:
             test_data_x = pd.DataFrame(test_data_x, columns=self.list_column_names)
 
         return test_data_x, test_data_y
+
+    def get_full_dataframe(self, test_data=False):
+        """
+        Function to get the full dataframe of the training or test file.
+        :param test_data: boolean (default=False), whenever to get the test(=True) data of the training(=False) data
+        :return: pandas.Dataframe with the training/test data, with all the columns of the model from the declaration
+        """
+        file_name = self.test_file_name if test_data else self.training_file_name
+        data = pd.read_csv(file_name, comment='#', header=0)
+        return data
