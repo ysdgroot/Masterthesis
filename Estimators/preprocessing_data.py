@@ -93,7 +93,7 @@ class DataManager:
         """
         try:
             file = pkg_resources.open_text(GeneratedData,
-                                           f"generateddata-{model}-{'testing' if test else 'training'}.csv")
+                                           f"generateddata-{model}-{'testing' if test else 'training'}-v2.csv")
             # data_folder = Path('C:/Users/Yucatan De Groote/Documents/Universiteit/Masterproef/GeneratedData')
             return file.name
         except FileNotFoundError:
