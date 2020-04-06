@@ -172,25 +172,6 @@ def get_brownian_motions_with_correlation(n_paths: int,
                                           correlation: float,
                                           maturity: int,
                                           steps_per_maturity: int = 100):
-    """
-    Gives 2 Brownian motions which are correlated with each other.
-
-    :param n_paths: A positive integer.
-                    For the number of paths that needs to be generated.
-                    Changes the output of this function.
-    :param correlation: Value between -1 and 1.
-                        This value is the correlation of the 2 brownian motions.
-    :param maturity: Positive integer.
-                    The total time period for the simulation.
-                    The period of one payment of the interest_rate should be the same as maturity=1.
-    :param steps_per_maturity: A positive integer. (default = 100)
-                                The amount of small steps taken to represent 1 maturity passing.
-                                The higher the number te more accurate it represents the stock,
-                                    but more time consuming
-    :return: 2d numpy.array with shape:
-                (n_paths, 2, maturity * time_step_per_maturity)
-            The rows are the brownian motions and together have correlation of the given value 'correlation'
-    """
 
     dt = 1 / steps_per_maturity
     number_of_steps = maturity * steps_per_maturity
@@ -404,13 +385,3 @@ speed_h_partvector = timeit.timeit(stockpaths_h_partvector, number=100)
 print(f"Speed H partvector: {speed_h_partvector}")
 speed_h_fastest = timeit.timeit(stockpaths_h_fastest, number=100)
 print(f"Speed H fastest: {speed_h_fastest}")
-
-# print(f"Speed BS naive: {speed_bs_naive}")
-# print(f"Speed BS vector: {speed_bs_vector}")
-#
-# print(f"Speed VG difference: {speed_vg_diff}")
-# print(f"Speed VG Brownian: {speed_vg_brownian}")
-#
-# print(f"Speed H naive: {speed_h_naive}")
-# print(f"Speed H partvector: {speed_h_partvector}")
-# print(f"Speed H fastest: {speed_h_fastest}")
