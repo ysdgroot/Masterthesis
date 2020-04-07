@@ -1,21 +1,17 @@
-from stockmodels import BlackScholes, VarianceGamma, HestonModel
+from stockmodels import HestonModel
 from options import PlainVanilla, AsianMean, Lookback
 import time
 import csv
 import numpy as np
 from multiprocessing import Manager, Pool
 
-# Testing paths
-# time_steps_per_maturities = [i for i in range(500, 1001, 100)]
-# amount_paths = [i for i in range(1000, 20001, 1000)]
-
+# Setting values for the amount of paths to generated and the step sizes (time_steps)
 time_steps_per_maturities = [j for j in range(5, 100, 5)] + [i for i in range(100, 1001, 100)]
 amount_paths = [i for i in range(1000, 20001, 1000)]
 
+# if the tests needs to be done, in order 'Standard, Asian, Lookback'
 write_header_to_files = [True, True, True]
-# write_header_to_files = [False, False, False]
-# do_tests = [True, True, True]
-do_tests = [False, False, False]
+do_tests = [True, True, True]
 
 number_iterations = 50
 
@@ -41,8 +37,15 @@ correlation = -0.5
 start_price = 100
 strike_price = 100
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 # Construction object for the Heston model
-heston = HestonModel(interest_rate, start_vol, long_var, rate_revert, vol_of_vol, correlation)
+heston = HestonModel(interest_rate=interest_rate,
+                     start_volatility=start_vol,
+                     long_volatility=long_var,
+                     rate_revert_to_long=rate_revert,
+                     volatility_of_volatility=vol_of_vol,
+                     correlation_processes=correlation)
 
 # Different types of option_types
 option_standard = PlainVanilla()
@@ -53,11 +56,18 @@ options = [option_standard, option_asian, option_lookback]
 option_names = ["Plainvanilla", "Asian", "Lookback"]
 dict_file_names = dict(zip(option_names, file_names))
 
-
 ########################################################################################################################
 
 
 def partition_maker(total_number, value_splitter):
+    """
+    function to make partitions of size max 'value_splitter'.
+    This is to use to split the number of paths generated at the same moment, to use less memory.
+
+    :param total_number: positive int.
+    :param value_splitter: positive int
+    :return: list, with all the sizes of the partitions
+    """
     deler, rest = divmod(total_number, value_splitter)
 
     values = [value_splitter] * deler
@@ -68,6 +78,13 @@ def partition_maker(total_number, value_splitter):
 
 
 def write_comment_info_and_header(file_n, option_name):
+    """
+    Directly write the information of the simulation as comment in the csv file
+
+    :param file_n: str, full name of the file
+    :param option_name: str, the name of the option
+    :return: None
+    """
     col_names = ['time_step', 'paths', 'time', 'option_price', 'variance']
 
     with open(file_n, 'w', newline='') as fd:
@@ -88,36 +105,46 @@ def write_comment_info_and_header(file_n, option_name):
         csv.writer(fd).writerow(col_names)
 
 
-# write header and comments if the work needs to be done
-for bool_header, bool_test, file_name, option_name in zip(write_header_to_files, do_tests, file_names, option_names):
-    if bool_header and bool_test:
-        write_comment_info_and_header(file_name, option_name)
-
-
-# def function_per_amount_paths(amount, queue):
-#     for time_step in time_steps_per_maturities:
-#         print(f"Amount {amount}, timestep = {time_step} ")
-#
-#         for i in range(number_iterations):
-#             start = time.perf_counter()
-#             paths = heston.get_stock_prices(amount, start_price, maturity, steps_per_maturity=time_step, seed=42+i)
-#             end = time.perf_counter()
-#             # total_time += end - start
-#             total_time = end - start
-#
-#             for bool_test, file_name, option, opt_name in zip(do_tests, file_names, option_types, option_names):
-#                 if bool_test:
-#                     approx_call, variance = option.get_price_option(paths, maturity, interest_rate,
-#                                                                  strike_price=strike_price)
-#
-#                     temp_result = [time_step, amount, total_time, approx_call, variance]
-#
-#                     queue.put((opt_name, temp_result))
-#
-#     print(f"End {amount}")
-
-
 def function_per_amount_paths(amount, queue):
+    """
+     Function to do the simulations in parallel and to write to the same file without mistakes.
+
+     :param amount: positive int, number of paths that needs to be generated
+     :param queue: Queue, for parallel writing
+     :return: None
+     """
+    for time_step in time_steps_per_maturities:
+        print(f"Amount {amount}, timestep = {time_step} ")
+
+        for i in range(number_iterations):
+            start = time.perf_counter()
+            paths = heston.get_stock_prices(amount, start_price, maturity, steps_per_maturity=time_step, seed=42 + i)
+            end = time.perf_counter()
+            # total_time += end - start
+            total_time = end - start
+
+            for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
+                if bool_test:
+                    approx_call, variance = option.get_price_option(paths, maturity, interest_rate,
+                                                                    strike_price=strike_price)
+
+                    temp_result = [time_step, amount, total_time, approx_call, variance]
+
+                    queue.put((opt_name, temp_result))
+
+    print(f"End {amount}")
+
+
+def function_per_amount_paths_partitions(amount, queue):
+    """
+     Function to do the simulations in parallel and to write to the same file without mistakes.
+
+     To use less memory, this function is written to generated less paths at once.
+
+     :param amount: positive int, number of paths that needs to be generated
+     :param queue: Queue, for parallel writing
+     :return: None
+     """
     for time_step in time_steps_per_maturities:
         print(f"Amount {amount}, timestep = {time_step} ")
 
@@ -133,9 +160,9 @@ def function_per_amount_paths(amount, queue):
                 start = time.perf_counter()
                 paths = heston.get_stock_prices(n_paths, start_price, maturity, steps_per_maturity=time_step)
                 end = time.perf_counter()
-                # total_time += end - start
                 total_time += end - start
 
+                # do all the tests for each option if necessary
                 for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
                     if bool_test:
                         option_prices = dict_option_prices.get(opt_name, [])
@@ -143,8 +170,10 @@ def function_per_amount_paths(amount, queue):
                                                                         maturity,
                                                                         interest_rate,
                                                                         strike_price=strike_price))
+                        # put results in a temporary list
                         dict_option_prices[opt_name] = option_prices
 
+            # writting to file when all the paths are generated and if necessary
             for bool_test, file_name, option, opt_name in zip(do_tests, file_names, options, option_names):
                 if bool_test:
                     prices_option = dict_option_prices[opt_name]
@@ -162,6 +191,8 @@ def write_to_file_parallel(queue):
         m = queue.get()
         if m == 'kill':
             break
+        # get the first value, this will give the name of the option.
+        # With the dictionary we get the file name
         name_file = dict_file_names[m[0]]
         with open(name_file, 'a', newline='') as f:
             csv.writer(f).writerow(m[1])
@@ -177,7 +208,7 @@ def main_h():
     watcher = pool.apply_async(write_to_file_parallel, (queue,))
     jobs = []
     for j in amount_paths:
-        job = pool.apply_async(function_per_amount_paths, (j, queue))
+        job = pool.apply_async(function_per_amount_paths_partitions, (j, queue))
         jobs.append(job)
 
     for job in jobs:
@@ -189,7 +220,12 @@ def main_h():
 
 
 if __name__ == "__main__":
-    print('Start')
-    start = input("Mag starten?(y/n)")
+    start = input("Start?(y/n)")
     if sum(do_tests) > 0 and start == 'y':
+        # write header and comments if the simulation needs to be done
+        for bool_header, bool_test, file_name, option_name in zip(write_header_to_files, do_tests, file_names,
+                                                                  option_names):
+            if bool_header and bool_test:
+                write_comment_info_and_header(file_name, option_name)
+
         main_h()

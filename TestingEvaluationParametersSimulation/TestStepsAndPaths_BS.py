@@ -1,17 +1,18 @@
-from stockmodels import BlackScholes, VarianceGamma, HestonModel
+from stockmodels import BlackScholes
 from options import PlainVanilla, AsianMean, Lookback
 import time
 import csv
 from multiprocessing import Manager, Pool
 
-# Testing paths
+# Setting values for the amount of paths to generated and the step sizes (time_steps)
 time_steps_per_maturities = [j for j in range(5, 100, 5)] + [i for i in range(100, 1001, 100)]
 amount_paths = [i for i in range(1000, 20001, 1000)]
 
-write_header_to_files = [True, True, True]
 # if the tests needs to be done, in order 'Standard, Asian, Lookback'
-# do_tests = [False, False, False]
+write_header_to_files = [True, True, True]
 do_tests = [True, True, True]
+
+number_iterations = 50
 
 # The different file_name to write through
 file_name_standard = 'Datafiles/Test-steps and accuracy-BS-v1-1-test.csv'
@@ -20,15 +21,13 @@ file_name_lookback = 'Datafiles/Test-steps and accuracy-BS-v3-1-Lookback-test.cs
 
 file_names = [file_name_standard, file_name_asian, file_name_lookback]
 
-file_name = file_name_standard
-
 maturity = 10
 interest_rate = 0.001
 volatitlity = 0.1
 start_price = 100
 strike_price = 100
 
-number_iterations = 50
+# ----------------------------------------------------------------------------------------------------------------------
 
 BS = BlackScholes(interest_rate, volatitlity)
 
@@ -44,14 +43,21 @@ dict_file_names = dict(zip(option_names, file_names))
 
 # get price Black Scholes formula
 exact_call = BlackScholes.solution_call_option(start_price, strike_price, maturity, interest_rate, volatitlity)
-
-
 ########################################################################################################################
 
 
-def write_comment_info_and_header(file_n, option_name, plain_vanilla_option=False):
+def write_comment_info_and_header(file_n, option_name):
+    """
+    Directly write the information of the simulation as comment in the csv file
+
+    :param file_n: str, full name of the file
+    :param option_name: str, the name of the option
+    :return: None
+    """
+
     col_names = ['time_step', 'paths', 'time', 'option_price', 'variance']
-    if plain_vanilla_option:
+    # different test for the BS model and plainvanilla option
+    if option_name == "Plainvanilla":
         col_names += ["relative_diff", "absolute_diff", "exact_price"]
 
     with open(file_n, 'w', newline='') as fd:
@@ -68,13 +74,15 @@ def write_comment_info_and_header(file_n, option_name, plain_vanilla_option=Fals
         csv.writer(fd).writerow(col_names)
 
 
-for bool_header, bool_test, file_n, option_n, is_standard in zip(write_header_to_files, do_tests, file_names,
-                                                                 option_names, is_plain_vanilla):
-    if bool_header and bool_test:
-        write_comment_info_and_header(file_n, option_n, plain_vanilla_option=is_standard)
-
-
 def func_time_step(amount, queue):
+    """
+    Function to do the simulations in parallel and to write to the same file without mistakes.
+
+    :param amount: positive int, number of paths that needs to be generated
+    :param queue: Queue, for parallel writing
+    :return: None
+    """
+
     for time_step in time_steps_per_maturities:
         print(f"Amount {amount}, timestep = {time_step} ")
         for i in range(number_iterations):
@@ -83,6 +91,7 @@ def func_time_step(amount, queue):
             end = time.perf_counter()
             total_time = end - start
 
+            # do all the tests for each option if necessary
             for boolean_test, name_file, opt, is_standard_opt, opt_name in zip(do_tests, file_names, options,
                                                                                is_plain_vanilla, option_names):
                 if boolean_test:
@@ -91,7 +100,7 @@ def func_time_step(amount, queue):
 
                     temp_result = [time_step, amount, total_time, approx_call, variance]
 
-                    # When standard option, then caculate the relative difference
+                    # When standard option, then calculate the relative difference
                     if is_standard_opt:
                         rel_diff = (approx_call - exact_call) / exact_call
                         rel_diff_abs = abs(rel_diff)
@@ -100,6 +109,7 @@ def func_time_step(amount, queue):
                         # In this case we can compare the result with the theoretical price of the option.
                         temp_result.extend([rel_diff, rel_diff_abs, exact_call])
 
+                    # Put results in queue a queue (later on this will be collected and written to a file
                     queue.put((opt_name, temp_result))
     print(f"End {amount}")
 
@@ -109,6 +119,8 @@ def write_to_file_parallel(queue):
         m = queue.get()
         if m == 'kill':
             break
+        # get the first value, this will give the name of the option.
+        # With the dictionary we get the file name
         name_file = dict_file_names[m[0]]
         with open(name_file, 'a', newline='') as f:
             csv.writer(f).writerow(m[1])
@@ -118,7 +130,7 @@ def write_to_file_parallel(queue):
 def main_bs():
     manager = Manager()
     queue = manager.Queue()
-    pool = Pool(5)
+    pool = Pool(5)  # number of cores to use
 
     # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (queue,))
@@ -136,6 +148,11 @@ def main_bs():
 
 
 if __name__ == "__main__":
-    print('Start')
-    if sum(do_tests) > 0:
+    start = input("Start?(y/n)")
+    if sum(do_tests) > 0 and start == 'y':
+        # write header and comments if the simulation needs to be done
+        for bool_header, bool_test, file_n, option_n in zip(write_header_to_files, do_tests, file_names, option_names):
+            if bool_header and bool_test:
+                write_comment_info_and_header(file_n, option_n)
+
         main_bs()

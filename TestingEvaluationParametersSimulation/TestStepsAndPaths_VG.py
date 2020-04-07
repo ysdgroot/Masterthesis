@@ -1,19 +1,16 @@
-from stockmodels import BlackScholes, VarianceGamma, HestonModel
+from stockmodels import VarianceGamma
 from options import PlainVanilla, AsianMean, Lookback
 import time
 import csv
 from multiprocessing import Manager, Pool
 
-# Testing paths
-# time_steps_per_maturities = [i for i in range(100, 1001, 100)]
+# Setting values for the amount of paths to generated and the step sizes (time_steps)
 amount_paths = [i for i in range(1000, 20001, 1000)]
-# test paths
 time_steps_per_maturities = [j for j in range(5, 100, 5)] + [i for i in range(100, 1001, 100)]
 
-write_header_to_files = [True, True, True]
 # if the tests needs to be done, in order 'Standard, Asian, Lookback'
-do_tests = [False, False, False]
-# do_tests = [True, True, True]
+write_header_to_files = [True, True, True]
+do_tests = [True, True, True]
 
 number_iterations = 50
 
@@ -33,6 +30,8 @@ skewness = -0.2
 start_price = 100
 strike_price = 100
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 # Construct object of Variance Gamma method
 VG = VarianceGamma(interest_rate=interest_rate,
                    volatility=volatility,
@@ -48,11 +47,17 @@ options = [option_standard, option_asian, option_lookback]
 option_names = ["Plainvanilla", "Asian", "Lookback"]
 dict_file_names = dict(zip(option_names, file_names))
 
-
 ########################################################################################################################
 
 
 def write_comment_info_and_header(file_n, option_name):
+    """
+    Directly write the information of the simulation as comment in the csv file
+
+    :param file_n: str, full name of the file
+    :param option_name: str, the name of the option
+    :return: None
+    """
     col_names = ['time_step', 'paths', 'time', 'option_price', 'variance']
 
     with open(file_n, 'w', newline='') as fd:
@@ -71,12 +76,14 @@ def write_comment_info_and_header(file_n, option_name):
         csv.writer(fd).writerow(col_names)
 
 
-for bool_header, bool_test, file_n, option_n in zip(write_header_to_files, do_tests, file_names, option_names):
-    if bool_header and bool_test:
-        write_comment_info_and_header(file_n, option_n)
-
-
 def func_per_time_step(amount, queue):
+    """
+     Function to do the simulations in parallel and to write to the same file without mistakes.
+
+     :param amount: positive int, number of paths that needs to be generated
+     :param queue: Queue, for parallel writing
+     :return: None
+     """
     for time_step in time_steps_per_maturities:
         print(f"Amount {amount}, timestep = {time_step}")
         for i in range(number_iterations):
@@ -101,6 +108,8 @@ def write_to_file_parallel(queue):
         m = queue.get()
         if m == 'kill':
             break
+        # get the first value, this will give the name of the option.
+        # With the dictionary we get the file name
         name_file = dict_file_names[m[0]]
         with open(name_file, 'a', newline='') as f:
             csv.writer(f).writerow(m[1])
@@ -128,5 +137,11 @@ def main_vg():
 
 
 if __name__ == "__main__":
-    print('Start')
-    main_vg()
+    start = input("Start?(y/n)")
+    if sum(do_tests) > 0 and start == 'y':
+        # write header and comments if the simulation needs to be done
+        for bool_header, bool_test, file_n, option_n in zip(write_header_to_files, do_tests, file_names, option_names):
+            if bool_header and bool_test:
+                write_comment_info_and_header(file_n, option_n)
+
+        main_vg()
