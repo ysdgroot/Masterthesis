@@ -153,7 +153,7 @@ class AsianMean(Option):
         return strike_prices
 
     def __str__(self):
-        return "AsianMean"
+        return "Asian"
 
 
 class Lookback(Option):
