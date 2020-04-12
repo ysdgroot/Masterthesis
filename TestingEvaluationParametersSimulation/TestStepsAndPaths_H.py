@@ -19,11 +19,11 @@ number_iterations = 50
 max_paths_generating = 5000
 
 # The different file_name to write through
-file_name_standard = 'Datafiles/Test-steps and accuracy-H-v1-1.csv'
-file_name_asian = 'Datafiles/Test-steps and accuracy-H-v2-1-Asian.csv'
-file_name_lookback = 'Datafiles/Test-steps and accuracy-H-v3-1-Lookback.csv'
+file_name_standard = 'Datafiles/Test-steps and accuracy-H-Standard.csv'
+file_name_asian = 'Datafiles/Test-steps and accuracy-H-Asian.csv'
+file_name_lookback_min = 'Datafiles/Test-steps and accuracy-H-Lookback.csv'
 
-file_names = [file_name_standard, file_name_asian, file_name_lookback]
+file_names = [file_name_standard, file_name_asian, file_name_lookback_min]
 
 # The different file_name to write through
 maturity = 10
@@ -50,11 +50,12 @@ heston = HestonModel(interest_rate=interest_rate,
 # Different types of option_types
 option_standard = PlainVanilla()
 option_asian = AsianMean()
-option_lookback = Lookback()
+option_lookback_min = Lookback(lookback_min=True)
 
-options = [option_standard, option_asian, option_lookback]
-option_names = ["Plainvanilla", "Asian", "Lookback"]
+options = [option_standard, option_asian, option_lookback_min]
+option_names = ["Plainvanilla", "Asian", "Lookback(min)", "Lockback(max)"]
 dict_file_names = dict(zip(option_names, file_names))
+
 
 ########################################################################################################################
 

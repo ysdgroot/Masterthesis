@@ -15,11 +15,11 @@ do_tests = [True, True, True]
 number_iterations = 50
 
 # The different file_name to write through
-file_name_standard = 'Datafiles/Test-steps and accuracy-BS-v1-1-test.csv'
-file_name_asian = 'Datafiles/Test-steps and accuracy-BS-v2-1-Asian-test.csv'
-file_name_lookback = 'Datafiles/Test-steps and accuracy-BS-v3-1-Lookback-test.csv'
+file_name_standard = 'Datafiles/Test-steps and accuracy-BS-Standard.csv'
+file_name_asian = 'Datafiles/Test-steps and accuracy-BS-Asian.csv'
+file_name_lookback_min = 'Datafiles/Test-steps and accuracy-BS-Lookback.csv'
 
-file_names = [file_name_standard, file_name_asian, file_name_lookback]
+file_names = [file_name_standard, file_name_asian, file_name_lookback_min]
 
 maturity = 10
 interest_rate = 0.001
@@ -34,15 +34,18 @@ BS = BlackScholes(interest_rate, volatitlity)
 # The different option_types types
 option_standard = PlainVanilla()
 option_asian = AsianMean()
-option_lookback = Lookback()
+option_lookback_min = Lookback(lookback_min=True)
 
-options = [option_standard, option_asian, option_lookback]
-option_names = ["Plainvanilla", "Asian", "Lookback"]
-is_plain_vanilla = [True, False, False]
+options = [option_standard, option_asian, option_lookback_min]
+option_names = ["Plainvanilla", "Asian", "Lookback(min)"]
 dict_file_names = dict(zip(option_names, file_names))
+
+is_plain_vanilla = [True, False, False]
 
 # get price Black Scholes formula
 exact_call = BlackScholes.solution_call_option(start_price, strike_price, maturity, interest_rate, volatitlity)
+
+
 ########################################################################################################################
 
 
@@ -130,7 +133,7 @@ def write_to_file_parallel(queue):
 def main_bs():
     manager = Manager()
     queue = manager.Queue()
-    pool = Pool(5)  # number of cores to use
+    pool = Pool(7)  # number of cores to use
 
     # start file writer in other pool
     watcher = pool.apply_async(write_to_file_parallel, (queue,))

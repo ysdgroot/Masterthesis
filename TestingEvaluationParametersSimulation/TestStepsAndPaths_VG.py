@@ -15,11 +15,11 @@ do_tests = [True, True, True]
 number_iterations = 50
 
 # The different file_name to write through
-file_name_standard = 'Datafiles/Test-steps and accuracy-VG-v1-1.csv'
-file_name_asian = 'Datafiles/Test-steps and accuracy-VG-v2-1-Asian.csv'
-file_name_lookback = 'Datafiles/Test-steps and accuracy-VG-v3-1-Lookback.csv'
+file_name_standard = 'Datafiles/Test-steps and accuracy-VG-Standard.csv'
+file_name_asian = 'Datafiles/Test-steps and accuracy-VG-Asian.csv'
+file_name_lookback_min = 'Datafiles/Test-steps and accuracy-VG-Lookback.csv'
 
-file_names = [file_name_standard, file_name_asian, file_name_lookback]
+file_names = [file_name_standard, file_name_asian, file_name_lookback_min]
 
 # The different file_name to write through
 maturity = 10
@@ -41,11 +41,12 @@ VG = VarianceGamma(interest_rate=interest_rate,
 # The different option_types types
 option_standard = PlainVanilla()
 option_asian = AsianMean()
-option_lookback = Lookback()
+option_lookback_min = Lookback(lookback_min=True)
 
-options = [option_standard, option_asian, option_lookback]
-option_names = ["Plainvanilla", "Asian", "Lookback"]
+options = [option_standard, option_asian, option_lookback_min]
+option_names = ["Plainvanilla", "Asian", "Lookback(min)"]
 dict_file_names = dict(zip(option_names, file_names))
+
 
 ########################################################################################################################
 
