@@ -3,18 +3,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Which option_types that needs to be evaluated BS, VG, H
-evaluate_stock_model = [False, False, False]
+evaluate_stock_model = [True, True, True]
 model_names = ["BS", "VG", "H"]
 dict_model_names = {"BS": "Black Scholes",
                     "VG": "Variance Gamma",
                     "H": "Heston"}
 
 # Which option_types that needs to be evaluated 'Standard', 'Asian','Lookback'
-evaluate_options = [True, True, True]
 option_names = ["Standard", "Asian", "Lookback"]
+evaluate_options = [True, True, True]
 
 plot_mean = True
-plot_min_max = True
+plot_min_max = False
 
 plot_percentile = False
 percentile = 1
@@ -24,21 +24,20 @@ percentile = 1
 restriction = None
 
 # column name from the csv file as the X-variable
-x_name = "paths"
-# x_name = "time_step"
+# x_name = "paths"
+x_name = "time_step"
 
 # column name from de csv file as Y-variable
 y_name = "option_price"
 y_label = "Price option"
 
-# accuracy_absolute,accuracy_normal,exact_value
-y_name_standard_BS = "accuracy_normal"
-# y_name_standard_BS = "accuracy_absolute"
-dict_y_label_standardBS = {"accuracy_normal": "Relative difference",
-                           "accuracy_absolute": "Absolute Relative difference"}
+y_name_standard_BS = "relative_diff"
+# y_name_standard_BS = "absolute_diff"
+dict_y_label_standardBS = {"relative_diff": "Relative difference",
+                           "absolute_diff": "Absolute Relative difference"}
 
 dict_label_name = {"paths": "Number of paths",
-                   "time_step": "Amount of steps per maturity"
+                   "time_step": "Number of steps per maturity"
                    }
 x_label = dict_label_name[x_name]
 
@@ -52,17 +51,46 @@ dict_title_restriction = {"paths": "-Paths=({},{})",
 
 
 ########################################################################################################################
-def read_data(filename):
+def read_data(model, option_type):
+    """
+    Read and return the data from a model and option type.
+
+    :param model: str (BS, VG or H)
+    :param option_type: str, ("Standard", "Asian", "Lookback(min)", "Lookback(max)")
+    :return: pd.Dataframe (columns depends on the model)
+    """
+    filename = get_filename(model, option_type)
     data = pd.read_csv(filename, header=0, comment='#')
     return data
 
 
 def get_filename(model, option_type):
+    """
+    Return the filename where the data is stored.
+    :param model: str (BS, VG or H)
+    :param option_type: str, ("Standard", "Asian", "Lookback(min)", "Lookback(max)")
+    :return: str
+    """
     return f'Datafiles/{dict_model_names[model]}/Test-steps and accuracy-{model}-{option_type}.csv'
 
 
 def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_max=False, plot_mean=False,
                          restriction=None, plot_percentile=False, percentile=1):
+    """
+    # todo: comments schrijven!
+    :param data:
+    :param x_name:
+    :param y_name:
+    :param title:
+    :param xlabel:
+    :param ylabel:
+    :param plot_min_max:
+    :param plot_mean:
+    :param restriction:
+    :param plot_percentile:
+    :param percentile:
+    :return:
+    """
     data_x = data[x_name]
     data_y = data[y_name]
 
@@ -86,8 +114,8 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
         for x in unique_x:
             min_line.append(np.min(data_y[data[x_name] == x]))
             max_line.append(np.max(data_y[data[x_name] == x]))
-        line_min, = plt.plot(unique_x, min_line, color='green')
-        plt.plot(unique_x, max_line, color='green')
+        line_min, = plt.plot(unique_x, min_line, color='orange')
+        plt.plot(unique_x, max_line, color='orange')
 
         # the lines are the same for the minimum and maximum
         legend_variables.append(line_min)
@@ -100,8 +128,8 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
         for x in unique_x:
             line_min.append(np.percentile(data_y[data[x_name] == x], percentile))
             line_max.append(np.percentile(data_y[data[x_name] == x], percentile_max))
-        line_min_percentile, = plt.plot(unique_x, line_min, color='orange')
-        plt.plot(unique_x, line_max, color='orange')
+        line_min_percentile, = plt.plot(unique_x, line_min, color='green')
+        plt.plot(unique_x, line_max, color='green')
 
         # the lines are the same for the minimum and maximum percentile
         legend_variables.append(line_min_percentile)
@@ -115,16 +143,21 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
 
         legend_variables.append(line_mean)
         legend_variable_names.append("Mean")
+
     # todo deze stuk code verwijderen
-    # restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
+    restrictions = [("paths", 1000, 10000), ("paths", 10000, 20000)]
     # restrictions = [("paths", i, i + 1000) for i in range(1000, 20000, 1000)]
-    restrictions = [("time_step", 5, 50), ("time_step", 60, 100), ("time_step", 200, 400), ("time_step", 900, 1000)]
+    # restrictions = [("time_step", 5, 100), ("time_step", 200, 600), ("time_step", 700, 1000)]
     # # ("time_step", 101, 300), ("time_step", 301, 600),, ("time_step", 801, 1000), ("time_step", 55, 100), ("time_step", 101, 300),
     for restrict in restrictions:
-        scat_points = plt.scatter(data_x[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])], data_y[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])])
+        scat_points = plt.scatter(data_x[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])],
+                                  data_y[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])])
+
+        dict_rename = {"time_step": "n_steps",
+                       "paths": "n_paths"}
 
         legend_variables.append(scat_points)
-        legend_variable_names.append(f"{restrict[0]}: [{restrict[1]}-{restrict[2]}]")
+        legend_variable_names.append(f"{dict_rename[restrict[0]]}: [{restrict[1]}-{restrict[2]}]")
 
     # plt.scatter(data_x, data_y)
     plt.title(title)
@@ -141,7 +174,7 @@ def test_bar_plot(data,
                   xlabel="",
                   ylabel="",
                   n_splits=4):
-    x_name = "time_step"
+    # x_name = "time_step"
     y_name = "option_price"
 
     x_name = "paths"
@@ -198,8 +231,7 @@ if any(evaluate_options) and any(evaluate_options):
     for evaluate_m, model in zip(evaluate_stock_model, model_names):
         for evaluate_opt, option in zip(evaluate_options, option_names):
             if evaluate_m and evaluate_opt:
-                file_name = get_filename(model, option)
-                data_options = read_data(file_name)
+                data_options = read_data(model, option)
 
                 # special case BS and Standard option
                 if model == "BS" and option == "Standard":
@@ -227,75 +259,3 @@ if any(evaluate_options) and any(evaluate_options):
                                          percentile=percentile,
                                          restriction=restriction)
 
-########################################################################################################################
-# TESTING ########################
-##################################
-model = "VG"
-option = "Standard"
-
-file_name = "Datafiles/Test-steps and accuracy-VG-v1-1.csv"
-# file_name = "Datafiles/Test-steps and accuracy-H-v2-1-Asian.csv"
-# file_name = "Datafiles/Test-steps and accuracy-H-v3-1-Lookback.csv"
-file_name_2 = get_filename(model, option)
-
-data_options = read_data(file_name)
-data_options2 = read_data(file_name_2)
-
-# new_data = data_options.append(data_options2)
-new_data = data_options
-
-test_bar_plot(new_data)
-
-# print(new_data)
-
-x_name = "paths"
-# x_name = "time_step"
-# restriction = ("paths", 10000, 10000)
-#
-# restrictions = [("paths", 1000, 5000), ("paths", 5000, 10000), ("paths", 10000, 15000), ("paths", 15000, 20000)]
-
-# y_name = "variance"
-
-# restriction = ("time_step", 5, 100)
-
-# plot_change_variance(new_data, x_name,
-#                      y_name,
-#                      title=title_plot.format(option, dict_model_names[model]),
-#                      xlabel=x_label,
-#                      ylabel=y_label,
-#                      plot_mean=plot_mean,
-#                      plot_min_max=plot_min_max,
-#                      plot_percentile=False,
-#                      percentile=percentile,
-#                      restriction=restriction)
-
-# unique_time_steps = data_options["time_step"].unique()
-# unique_paths = data_options["paths"].unique()
-#
-# n_paths = 15000
-# for path in unique_paths:
-#     var_all_time_steps = []
-#     if 1:
-#         time_steps = unique_time_steps[unique_time_steps <= 100]
-#         for i in time_steps:
-#             positions_paths = data_options["paths"] == path
-#             positions_time_steps = data_options["time_step"] == i
-#             var_all_time_steps.append(np.var(data_options[positions_paths & positions_time_steps]["option_price"]))
-#
-#         plt.plot(time_steps, var_all_time_steps)
-#
-# plt.show()
-
-# restrictions = [("paths", 1000, 5000)] + [("paths", i, i + 5000) for i in range(5000, 20000, 5000)]
-#
-# for restrict in restrictions:
-#     plot_change_variance(new_data, x_name,
-#                          y_name,
-#                          title=title_plot.format(option, dict_model_names[model]),
-#                          xlabel=x_label,
-#                          ylabel=y_label,
-#                          plot_mean=plot_mean,
-#                          plot_min_max=plot_min_max,
-#                          plot_percentile=True,
-#                          percentile=0,
-#                          restriction=restrict)
