@@ -16,7 +16,7 @@ forward_pricing_VG = False
 test_data_vg = False
 
 # Heston model
-make_heston_data = True
+make_heston_data = False
 forward_pricing_heston = False
 test_data_h = False
 
