@@ -1,6 +1,8 @@
 from sklearn import gaussian_process
 from sklearn.metrics import mean_squared_error
-from sklearn.gaussian_process.kernels import Matern, RBF, DotProduct
+from sklearn.gaussian_process.kernels import Matern, RBF, DotProduct, WhiteKernel, RationalQuadratic, ExpSineSquared
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+from scipy.stats import uniform
 from sklearn import preprocessing
 import modelsaver
 import time
@@ -10,60 +12,58 @@ import numpy as np
 ########################################################
 # ---------------- PARAMETERS --------------------------#
 ########################################################
-kernels = [RBF(), Matern(), DotProduct()]  # TODO: bekijk de specifieke parameters per kernel
+kernels = [RBF(), Matern(), DotProduct(), WhiteKernel(), RationalQuadratic()]
 
 alpha = None  # (default=1e-10) adding to diagonal kernel matrix
 
-n_restarts_optimizer = [i for i in range(5)]
 normalize_y = [True, False]
 
-param_grid = {'normalize_y': [True, False],
+param_grid = {"normalize_y": [True, False],
               'kernel': kernels,
-              "n_restarts_optimizer": [0, 1, 2, 3, 4]}
+              "n_restarts_optimizer": [i for i in range(10)],
+              "alpha": uniform(loc=0.000000001, scale=0.001)}
+
 
 ########################################################################################################################
 
-datamanager = prep.DataManager(column_fitting="opt_exact_standard")
-# datamanager = prep.DataManager(column_fitting="opt_asianmean")
-X, y = datamanager.get_training_data()
-del X["strike_price_percent"]
 
-random_positions = np.random.randint(0, 50000, size=10000)
+def cv_gpr_models(stockmodel, option, random_state=None, scale=False):
+    param_grid = {"normalize_y": [True, False],
+                  'kernel': kernels,
+                  "alpha": uniform(loc=0.000000001, scale=0.001)}
 
-# make the data smaller
-X = X.iloc[random_positions.tolist()]
-y = y.iloc[random_positions.tolist()]
+    datamanager = prep.DataManager(model=stockmodel, column_fitting=option)
+    X, y = datamanager.get_random_training_data(10000)
 
-X = preprocessing.scale(X)
+    if scale:
+        scaler = preprocessing.StandardScaler().fit(X, y)
+        X = scaler.transform(X)
 
-X_test, y_test = datamanager.get_test_data()
-del X_test["strike_price_percent"]
+    gpr = gaussian_process.GaussianProcessRegressor(optimizer="fmin_l_bfgs_b")
+    clf = RandomizedSearchCV(gpr, param_grid, random_state=random_state, cv=3, n_iter=50, verbose=10, n_jobs=2,
+                             scoring=['neg_mean_squared_error', 'r2'],
+                             refit=False)
 
-X_test = preprocessing.scale(X_test)
+    performance = clf.fit(X, y)
 
-for kernel in kernels:
-    print(f"Busy kernel {kernel}")
-    start = time.perf_counter()
-    model_gauss = gaussian_process.GaussianProcessRegressor(kernel=kernel,
-                                                            normalize_y=False,
-                                                            n_restarts_optimizer=3,
-                                                            optimizer="fmin_l_bfgs_b").fit(X, y)
-    end = time.perf_counter()
-    print(f"Time: {end - start}")
+    string_scaled = '_scaled' if scale else ""
+    modelsaver.save_model(performance, f"GPR-random_search_{stockmodel}_{option}{string_scaled}_random{random_state}")
 
-    score_eval_train = model_gauss.score(X, y)
-    print(f"Evaluation {score_eval_train}")
 
-    prediction = model_gauss.predict(X_test)
-    print(mean_squared_error(prediction, y_test))
+def main_cv():
+    models = ["BS", "VG", "H"]
+    columns_fitting = ["opt_standard", "opt_asianmean", "opt_lookbackmin", "opt_lookbackmax"]
 
-# pred_y = model_gauss.predict(X_test)
-#
-# score = model_gauss.score(X_test, y_test)
-# print(score)
-#
-# mse = mean_squared_error(y_test, pred_y)
-# print("Mean Squared Error:", mse)
-#
-# rmse = math.sqrt(mse)
-# print("Root Mean Squared Error:", rmse)
+    start_random_state = 594
+
+    for i, model in enumerate(models):
+        for j, option in enumerate(columns_fitting):
+            print(f"Start cv for {model}-{option}")
+            cv_gpr_models(model, option, random_state=start_random_state + 10 * i + j * 2, scale=True)
+
+    print("End")
+
+
+if __name__ == '__main__':
+    print("Start")
+    main_cv()
