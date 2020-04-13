@@ -1,153 +1,197 @@
-import numpy as np
-import math
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import RepeatedKFold, RandomizedSearchCV
 from Estimators import preprocessing_data as prep
-from scipy.stats import randint
 import matplotlib.pyplot as plt
-import time
-from pathlib import Path
 import modelsaver
 from sklearn import preprocessing
+import csv
+import numpy as np
+from sklearn import tree
 
+# from sklearn.tree import plot_tree
 ########################################################
 # ---------------- PARAMETERS -------------------------#
 ########################################################
+models = ["BS", "VG", "H"]
+# models = ["BS"]
+columns_fitting = ["opt_standard", "opt_asianmean", "opt_lookbackmin", "opt_lookbackmax"]
+# columns_fitting = ["opt_lookbackmax"]
 
-warm_start = [True, False]
-bootstap = [True, False]
-n_estimators = [i for i in range(10, 601, 10)]
+dict_column_to_option = {"opt_standard": "Standard",
+                         "opt_asianmean": "Asian",
+                         "opt_lookbackmin": "Lookback (min)",
+                         "opt_lookbackmax": "Lookback (max)",
+                         "opt_exact_standard": "Standard(theory)"}
 
 
 ########################################################################################################################
 
+def plot_results(model, column_fitting, dict_results, list_estimators):
+    # list_figures = []
+    list_names_fig = []
 
-# ["opt_exact_standard", "opt_asianmean", "opt_lookbackmin", "opt_lookbackmax"]
+    figure, ax = plt.subplots()
+
+    for key, value in dict_results.items():
+        fig, = ax.plot(list_estimators, value)
+        # list_figures.append(fig)
+        list_names_fig.append(key)
+
+    ax.set_title(f"Performance {model}-{dict_column_to_option[column_fitting]} option")
+    ax.set_ylabel("Mean squared error")
+    ax.set_xlabel("Number of estimators")
+    ax.legend(list_names_fig)
+
+    figure.savefig(f"RF-{model}-{dict_column_to_option[column_fitting]}.png")
 
 
-# todo: bekijken voor het herschalen van de data - preprocessing
+def rf_n_estimators(model="BS",
+                    column_fitting="opt_exact_standard",
+                    range_n_estimators=range(50, 1001, 50),
+                    save_mse=True,
+                    save_figure=True,
+                    max_features="auto"):
+    # todo: commentaar schrijven
+    # models = ["BS", "VG", "H"]
+    # columns_fitting = ["opt_standard", "opt_asianmean", "opt_lookbackmin", "opt_lookbackmax"]
 
-# Test for the MSE of the Randomforest regressor in function of the number of estimators
-def do_graph_estimators(list_n_estimators, save_values=False):
-    datamanager = prep.DataManager(column_fitting="opt_exact_standard")
+    dict_option_types = {"opt_exact_standard": "SE",
+                         "opt_standard": "S",
+                         "opt_asianmean": "A",
+                         "opt_lookbackmin": "Lmin",
+                         "opt_lookbackmax": "Lmax"}
+
+    list_results_train = []
+    list_results_test = []
+    list_oob_score = []
+
+    datamanager = prep.DataManager(model=model,
+                                   column_fitting=column_fitting)
 
     X, y = datamanager.get_training_data()
-    del X["strike_price_percent"]
+    X_test, y_test = datamanager.get_test_data()
 
-    test_data_X, test_data_y = datamanager.get_test_data()
-    del test_data_X["strike_price_percent"]
+    for n_estimator in range_n_estimators:
+        rf_model = RandomForestRegressor(n_estimators=n_estimator,
+                                         verbose=1,
+                                         n_jobs=7,
+                                         random_state=2458 + n_estimator,
+                                         max_features=max_features,
+                                         oob_score=True)
+        rf_model.fit(X, y)
 
-    dict_mse_RF = {f'b{True}-w{True}': [], f'b{True}-w{False}': [], f'b{False}-w{True}': [], f'b{False}-w{False}': []}
+        mse_train = mean_squared_error(y, rf_model.predict(X))
+        mse_test = mean_squared_error(y_test, rf_model.predict(X_test))
+        oob_score = rf_model.oob_score_
 
-    warm_starts = [True, False]
-    bootstraps = [True, False]
+        print(f'Train {mse_train}')
+        print(f'Test {mse_test}')
+        print(f'OOB score: {oob_score}')
 
-    for i, n_estimator in enumerate(list_n_estimators):
-        for warm_start in warm_starts:
-            for bootstrap in bootstraps:
-                random_forest_m1 = RandomForestRegressor(criterion="mse",
-                                                         max_features="auto",
-                                                         n_jobs=6,
-                                                         n_estimators=n_estimator,
-                                                         warm_start=warm_start,
-                                                         bootstrap=bootstrap,
-                                                         verbose=1,
-                                                         random_state=113 + i + 2 * warm_start + 5 * bootstrap)
+        list_results_train.append(mse_train)
+        list_results_test.append(mse_test)
+        list_oob_score.append(oob_score)
 
-                random_forest_m1.fit(X, y)
+    dict_result = {"Train": list_results_train,
+                   "Test": list_results_test,
+                   "oob_score": list_oob_score,
+                   "n_estimators": range_n_estimators}
 
-                predictions = random_forest_m1.predict(test_data_X)
-
-                mse_rf = mean_squared_error(test_data_y, predictions)
-
-                dict_mse_RF[f'b{bootstrap}-w{warm_start}'].append(mse_rf)
-
-                print(f"first {mse_rf}")
-
-    if save_values:
-        dict_mse_RF['range'] = list_n_estimators
-
-        modelsaver.save_model(dict_mse_RF, "RF_graph_estimators_performance_dict")
-
-
-# list_n_estimators = [i for i in range(10, 601, 10)]
-# do_graph_estimators(list_n_estimators)
+    if save_figure:
+        plot_results(model,
+                     column_fitting,
+                     dict_results=dict_result,
+                     list_estimators=range_n_estimators)
+    if save_mse:
+        modelsaver.save_model(dict_result, f"rf_50-1000-results_train_test-{model}-{dict_option_types[column_fitting]}"
+                                           f"-{max_features}")
 
 
-def plot_results():
-    dict_rf = modelsaver.get_model("RF_graph_estimators_performance_dict_v2")
+def test_scaling():
+    datamanager = prep.DataManager(model="VG", column_fitting="opt_standard")
 
-    list_n_estimators = dict_rf['range']
-    # ------------------------------------------------------------------------------------
-    # waarden = f'b{bootstrap}-w{warm_start}'
-    names_bootstrap = ["Warm start", "No warm start"]
+    X, y = datamanager.get_training_data()
+    rf_normal = RandomForestRegressor(n_estimators=200, n_jobs=7, verbose=1)
+    rf_normal.fit(X, y)
 
-    fig_warm_boot, = plt.plot(list_n_estimators, dict_rf[f'b{True}-w{True}'])
-    fig_notwarm_boot, = plt.plot(list_n_estimators, dict_rf[f'b{True}-w{False}'])
+    print("Data not scaled")
+    mse_score = mean_squared_error(y, rf_normal.predict(X))
+    print(f"MSE score training data: {mse_score}")
 
-    plt.title("Performance Randomforest-Boostrap: number of estimators")
-    plt.xlabel("Number of estimators")
-    plt.ylabel("MSE")
+    X_test, y_test = datamanager.get_test_data()
 
-    plt.legend([fig_warm_boot, fig_notwarm_boot], names_bootstrap)
+    mse_score_test = mean_squared_error(y_test, rf_normal.predict(X_test))
+    print(f"mse score test data: {mse_score_test}")
 
-    plt.show()
-    # ----------------------------------------------------------------------------------------
-    names_nobootstrap = ["Warm start", "No warm start"]
+    scaler = preprocessing.StandardScaler().fit(X, y)
+    X = scaler.transform(X)
+    rf_scaled = RandomForestRegressor(n_estimators=200, n_jobs=7, verbose=1)
+    rf_scaled.fit(X, y)
 
-    fig_warm_nboot, = plt.plot(list_n_estimators, dict_rf[f'b{False}-w{True}'])
-    fig_notwarm_nboot, = plt.plot(list_n_estimators, dict_rf[f'b{False}-w{False}'])
+    print("Only call options")
+    print("Scaled data")
+    mse_score = mean_squared_error(y, rf_scaled.predict(X))
 
-    plt.title("Performance Randomforest-No Bootstrap: number of estimators")
-    plt.xlabel("Number of estimators")
-    plt.ylabel("MSE")
+    print(f"MSE score training data: {mse_score}")
+    X_test = scaler.transform(X_test)
 
-    plt.legend([fig_warm_nboot, fig_notwarm_nboot], names_nobootstrap)
+    mse_score_test = mean_squared_error(y_test, rf_scaled.predict(X_test))
 
-    plt.show()
-
-
-def rf_only_percentage(save_model=False):
-    n_estimators = 600
-    warm_start = True
-
-    # collecting data from files
-    datamanager = prep.DataManager(column_fitting="opt_standard",
-                                   model="VG")
-
-    # the columns to retrieve from the file
-    # list_columns = ["strike_price_percent", "interest_rate", "volatility", "maturity", "call/put"]
-    list_columns = None
-
-    X, y = datamanager.get_training_data(list_column_names=list_columns)
-    test_data_X, test_data_y = datamanager.get_test_data(list_column_names=list_columns)
-
-    scaler = preprocessing.StandardScaler().fit(X)
-
-    X_scaled = scaler.transform(X)
-    X_test_scaled = scaler.transform(test_data_X)
-
-    rf_model = RandomForestRegressor(criterion="mse",
-                                     max_features="auto",
-                                     n_jobs=6,
-                                     n_estimators=n_estimators,
-                                     warm_start=warm_start,
-                                     bootstrap=True,
-                                     verbose=1,
-                                     random_state=1179)
-
-    rf_model.fit(X_scaled, y)
-
-    # predictions = rf_model.predict(test_data_X)
-    predictions = rf_model.predict(X_test_scaled)
-
-    mse_rf = mean_squared_error(test_data_y, predictions)
-
-    print(mse_rf)
-
-    if save_model:
-        modelsaver.save_model(rf_model, "RF_BS_only_percentages")
+    print(f"mse score test data: {mse_score_test}")
 
 
-rf_only_percentage(save_model=False)
+def full_rf_all_model_columns_n_estimators():
+    # todo: commentaar schrijven
+    max_features = ["auto", "log2", 5]
+    for model in models:
+        for column_fitting in columns_fitting:
+            for max_feature in max_features:
+                print(f"Model: {model} - {column_fitting} - {max_feature}")
+                rf_n_estimators(model=model,
+                                column_fitting=column_fitting,
+                                range_n_estimators=range(50, 1001, 50),
+                                save_mse=True,
+                                save_figure=False,
+                                max_features=max_feature)
+                if model == "BS" and column_fitting == "opt_standard":
+                    print(f"Model: BS - Exacte - {max_feature}")
+                    rf_n_estimators(model="BS",
+                                    column_fitting="opt_exact_standard",
+                                    range_n_estimators=range(50, 1001, 50),
+                                    save_mse=True,
+                                    save_figure=False,
+                                    max_features=max_feature)
+
+
+def one_tree_visualisation():
+    rf = RandomForestRegressor(n_estimators=100, max_features="auto", n_jobs=6, verbose=2)
+
+    datamanger = prep.DataManager()
+
+    X, y = datamanger.get_training_data()
+
+    # Train
+    rf.fit(X, y)
+    # Extract single tree
+    estimator = rf.estimators_[8]
+
+    # tree.export_graphviz(estimator, out_file='tree.dot', feature_names=X.columns)
+    # plot_tree(estimator, feature_names=X.columns)
+
+    # , figsize=(4, 4), dpi=800
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4, 4), dpi=800)
+    tree.plot_tree(rf.estimators_[8],
+                   feature_names=X.columns,
+                   max_depth=2,
+                   filled=True)
+    # plt.title("Random Forest: Decision Tree")
+    fig.savefig('rf_individualtree.png')
+
+    print(estimator.get_depth())
+
+
+if __name__ == "__main__":
+    # todo: deze test uitvoeren!!
+    full_rf_all_model_columns_n_estimators()
+    # test_scaling()
+    # one_tree_visualisation()

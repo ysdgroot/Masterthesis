@@ -1,30 +1,23 @@
-from sklearn.svm import LinearSVR
-from sklearn.kernel_approximation import Nystroem
+from sklearn.svm import LinearSVR, SVR
 from sklearn.metrics import mean_squared_error
 from Estimators import preprocessing_data as prep
 from scipy.stats import uniform
+from sklearn import preprocessing
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 import modelsaver
 
 ########################################################
 # ---------------- PARAMETERS --------------------------#
 ########################################################
-# SVR, linearSVR, NUSVR
-# linearSVR -> larger datasets (notes on scikit-learn)
-kernels = ["rbf", "laplacian", "poly", "sigmoid"]
-
-# gamma = ["scale", "auto"]  # kernel coefficient for 'rbf', 'poly' and 'sigmoid'
-gamma = [0.01, 0.001, 0.0001]
-degree = [2, 3, 4, 5]
-dual = False  # n_samples > n_features
+# linearSVR -> larger datasets (notes on scikit-learn), with scaling it is faster
+kernels = ["rbf", "poly", "sigmoid"]
 
 distributions = dict(C=uniform(loc=1, scale=50),
                      kernel=["rbf", "linear", "poly", "sigmoid"],
-                     degree=[1, 2, 3, 4, 5],
+                     degree=[2, 3, 4],
                      gamma=["scale", "auto"],
-                     shrinking=[True, False])
+                     epsilon=uniform(0.01, 5))
 
-# todo: Nystroem gebruiken met een lineaire SVR, anders zal het veel te lang duren om alles te doen.
 
 # param_grid = [{'C': [1, 10, 100, 1000], 'gamma': [0.01, 0.001, 0.0001], 'kernel': ['rbf'], 'tol':[0.01]},
 #               {'C': [1, 10, 100, 1000], 'degree':[2, 3, 4, 5], 'gamma': [0.01, 0.001, 0.0001], 'kernel': ['ploy'], 'tol':[0.01]},
@@ -33,70 +26,40 @@ distributions = dict(C=uniform(loc=1, scale=50),
 
 ########################################################################################################################
 
-datamanager = prep.DataManager(column_fitting="opt_exact_standard")
-# datamanager = prep.DataManager(column_fitting="opt_asianmean")
-X, y = datamanager.get_training_data()
-del X["strike_price_percent"]
+def cv_svr_models(model, column_fitting, random_state):
+    datamanager = prep.DataManager(model=model, column_fitting=column_fitting)
+    X, y = datamanager.get_training_data()
 
-feature_map = Nystroem(kernel="laplacian",
-                       gamma=0.01,
-                       n_components=1000,
-                       random_state=2)
+    # het SVR gaat veel sneller en presteert veel beter als de data wordt herschaald
+    # het werd ook aangeraden!
+    scaler = preprocessing.StandardScaler().fit(X, y)
+    X = scaler.transform(X)
 
-transformed_data = feature_map.fit_transform(X, y)
-lin_svr = LinearSVR(C=100,
-                    verbose=1,
-                    max_iter=10000)
+    svr = SVR(cache_size=500)
+    clf = RandomizedSearchCV(svr, distributions, random_state=random_state, cv=3, n_iter=50, verbose=10, n_jobs=7,
+                             scoring=['neg_mean_squared_error', 'r2'],
+                             refit=False)
 
-lin_svr.fit(transformed_data, y)
-print(f"Score = {mean_squared_error(y, lin_svr.predict(transformed_data))}")
+    performance = clf.fit(X, y)
 
-X_test, y_test = datamanager.get_test_data()
-del X_test["strike_price_percent"]
-
-transformed_data_test = feature_map.transform(X_test)
-
-print(f"Score test= {mean_squared_error(y_test, lin_svr.predict(transformed_data_test))}")
-# svr = SVR(verbose=1)
-
-# search = svr.fit(X, y)
+    modelsaver.save_model(performance, f"SVR-random_search_{model}_{column_fitting}_scaled_random{random_state}")
 
 
-# search = GridSearchCV(svr, param_grid, cv=5, n_jobs=7)
-# search.fit(X, y)
+def main_cv():
+    models = ["BS", "VG", "H"]
+    columns_fitting = ["opt_standard", "opt_asianmean", "opt_lookbackmin", "opt_lookbackmax"]
 
-# modelsaver.save_model(search, "SVR_gridsearch")
+    start_random_state = 257
 
-# print(search.cv_results_)
-# print(search.best_params_)
-# print(search.best_score_)
+    for i, model in enumerate(models):
+        for j, option in enumerate(columns_fitting):
+            print(f"Start cv for {model}-{option}")
+            if not model == "BS" and not model == "VG" and not (model == "H" and option == "opt_standard"):
+                cv_svr_models(model, option, random_state=start_random_state + 10 * i + j * 2)
+
+    print("End")
 
 
-# pred = search.predict(X_test)
-# mse = mean_squared_error(y_test, pred)
-# print(f'MSE test (best) {mse}')
-
-# for kernel in kernels:
-#     print(f"Kernel: {kernel}")
-#
-#     start = time.perf_counter()
-#     model_svr = LinearSVR(C=3.0,
-#                           dual=False,
-#                           cache_size=400,
-#                           coef0=0.0,
-#                           degree=6,
-#                           epsilon=0.1,
-#                           gamma='scale',
-#                           kernel=kernel,
-#                           max_iter=-1,
-#                           shrinking=True,
-#                           tol=0.0001).fit(X, y)
-#     end = time.perf_counter()
-#
-#     print('Time: ' + str(end - start))
-#
-#     score_eval_train = model_svr.score(X, y)
-#     print(f"Evaluation {score_eval_train}")
-#
-#     prediction = model_svr.predict(X_test)
-#     print(mean_squared_error(prediction, y_test))
+if __name__ == '__main__':
+    print("Start")
+    main_cv()
