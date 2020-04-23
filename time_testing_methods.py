@@ -25,7 +25,8 @@ def stockpaths_bs_naive(maturity=10,
         random_values = np.random.normal(0, np.sqrt(dt), number_of_steps)
         for index, i in enumerate(range(number_of_steps)):
             # the change for the stock price
-            next_price = previous_price + previous_price * (interest_rate * dt + volatility * random_values[index])
+            next_price = previous_price * np.exp((interest_rate - 0.5 * volatility ** 2) * dt +
+                                                 volatility * random_values[index])
             one_path_list.append(next_price)
             previous_price = next_price
         # append the list prices of 1 path to list with all the paths
@@ -39,24 +40,25 @@ def stockpaths_bs_vector(maturity=10,
                          interest_rate=0.01,
                          volatility=0.1,
                          start_price=100,
-                         amount_paths=10000):
+                         n_paths=10000):
     # the amount of timesteps needed for the stockprice
     number_of_steps = maturity * steps_per_maturity
     # length for each step
     dt = 1 / steps_per_maturity
 
-    # calculates a path(process) of factors starting from start_price.
-    # Each step is normal distributed with mean 0 and variance dt (length of a step)
-    # Because it is a process, i.e. based on the previous value, we take the product of the row ('cumprod(...,1)')
-    stock_process = np.cumprod(1 + interest_rate * dt +
-                               volatility * np.random.normal(0, np.sqrt(dt),
-                                                             (amount_paths, number_of_steps)), 1) * start_price
+    # calculates the ln(S(t)) process in Euler method.
+    # ln(S_t) = ln(S_{t-1}) + (r - 0.5 sigma^2) dt + sigma * N(0,dt)
+    # Because the next (ln) value depends on the sum of the previous ln(S), so we take the 'cumsum'.
+    # Add the end, we take the exponential and multiply this with S_0
+    ln_stock_process = np.cumsum((interest_rate - 0.5 * volatility ** 2) * dt +
+                                 volatility * np.random.normal(0, np.sqrt(dt),
+                                                               (n_paths, number_of_steps)), 1)
 
-    # starting prices, for the first column
-    first_column = np.ones((amount_paths, 1)) * start_price
+    # adding 0 column, to get 1 when we take the exponential (so the fist valus is the start_price)
+    ln_stock_process = np.append(np.zeros((n_paths, 1)), ln_stock_process, axis=1)
 
-    # adding start_price as first element
-    stock_process = np.append(first_column, stock_process, axis=1)
+    # because we simulated the ln(S_t) we need top take the exponential and multiply this value with the start_price
+    stock_process = start_price * np.exp(ln_stock_process)
 
     return stock_process
 
@@ -192,6 +194,7 @@ def get_brownian_motions_with_correlation(n_paths: int,
     return total_process_paths
 
 
+
 def stockpaths_h_naive(maturity=10,
                        steps_per_maturity=100,
                        interest_rate=0.01,
@@ -227,13 +230,14 @@ def stockpaths_h_naive(maturity=10,
             last_vol = volatilities[-1]
             not_negative_vol = max(last_vol, 0)
 
-            dS = last_price * (interest_rate * dt + np.sqrt(not_negative_vol) * bm_stock[i])
+            S = last_price * np.exp((interest_rate - 0.5 * not_negative_vol) * dt +
+                                    np.sqrt(not_negative_vol) * bm_stock[i])
             dnu = rate_revert_to_long * (long_variance - not_negative_vol) * dt + \
                   volatility_of_volatility * \
                   np.sqrt(not_negative_vol) * bm_volatility[i]
 
             # adding the next stock prices and volatilities
-            stock_prices.append(stock_prices[-1] + dS)
+            stock_prices.append(S)
             volatilities.append(volatilities[-1] + dnu)
         all_stock_prices.append(stock_prices)
         all_volatilities.append(volatilities)
@@ -285,16 +289,17 @@ def stockpaths_h_partvector(maturity=10,
     # This cause problems because the square root is taken for the volatility.
     all_volatilities[all_volatilities < 0] = 0
 
-    rate = interest_rate * dt
+    drift = (interest_rate - 0.5 * all_volatilities) * dt
     vol = np.sqrt(all_volatilities) * brownianmotion_stock_processes
 
-    # taking the product of the previous elements til the end.
-    # not take first element of 'vol' because this is already 0, otherwise it wil get one time to much interest
-    total_process = np.cumprod(1 + rate + vol, 1)
+    # the ln(S_t) = ln(S_{t-1}) + (r - 0.5 * sigma)dt + sqrt(sigma)* N(0, dt)
+    # this is the reason we take the 'cumsum'
+    total_process_ln = np.cumsum(drift + vol, axis=1)
 
-    first_column_stock = np.ones((n_paths, 1))
-    total_process = np.append(first_column_stock, total_process, axis=1)
-    total_process *= start_price
+    # adding 0, to get 1 when we take the exponential
+    total_process_ln = np.append(np.zeros((n_paths, 1)), total_process_ln, axis=1)
+
+    total_process = np.exp(total_process_ln) * start_price
 
     return total_process, all_volatilities
 
@@ -352,19 +357,19 @@ def stockpaths_h_fastest(maturity=10,
     all_volatilities[all_volatilities < 0] = 0
 
     # start of the Stock model process
-    rate = interest_rate * dt
+    drift = (interest_rate - 0.5 * all_volatilities) * dt
     vol = np.sqrt(all_volatilities) * brownianmotion_stock_processes
 
-    # taking the product of the previous elements til the end.
-    # not take first element of 'vol' because this is already 0, otherwise it wil get one time to much interest
-    total_process = np.cumprod(1 + rate + vol, 1)
+    # the ln(S_t) = ln(S_{t-1}) + (r - 0.5 * sigma)dt + sqrt(sigma)* N(0, dt)
+    # this is the reason we take the 'cumsum'
+    total_process_ln = np.cumsum(drift + vol, axis=1)
 
-    first_column_stock = np.ones((n_paths, 1))
-    total_process = np.append(first_column_stock, total_process, axis=1)
-    total_process *= start_price
+    # adding 0, to get 1 when we take the exponential the first element will be the start_price
+    total_process_ln = np.append(np.zeros((n_paths, 1)), total_process_ln, axis=1)
+
+    total_process = np.exp(total_process_ln) * start_price
 
     return total_process
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 
