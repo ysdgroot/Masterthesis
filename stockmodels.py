@@ -166,7 +166,7 @@ class BlackScholes(StockModel):
         self.volatility = volatility
 
     def get_stock_prices(self,
-                         amount_paths: int,
+                         n_paths: int,
                          start_price: float,
                          maturity: int,
                          steps_per_maturity: int = 100,
@@ -175,7 +175,7 @@ class BlackScholes(StockModel):
         Simulations of stock prices based on the Black Scholes model,
         this means the stock prices follows the Geometric Brownian Motion.
 
-        :param amount_paths: Positive integer.
+        :param n_paths: Positive integer.
                             This is the total number of paths generated.
         :param start_price: Positive float.
                             Is the starting price of the stock.
@@ -205,18 +205,19 @@ class BlackScholes(StockModel):
         # length for each step
         dt = 1 / steps_per_maturity
 
-        # calculates a path(process) of factors starting from start_price.
-        # Each step is normal distributed with mean 0 and variance dt (length of a step)
-        # Because it is a process, i.e. based on the previous value, we take the product of the row ('cumprod(...,1)')
-        stock_process = np.cumprod(1 + self.interest_rate * dt +
-                                   self.volatility * np.random.normal(0, np.sqrt(dt),
-                                                                      (amount_paths, number_of_steps)), 1) * start_price
+        # calculates the ln(S(t)) process in Euler method.
+        # ln(S_t) = ln(S_{t-1}) + (r - 0.5 sigma^2) dt + sigma * N(0,dt)
+        # Because the next (ln) value depends on the sum of the previous ln(S), so we take the 'cumsum'.
+        # Add the end, we take the exponential and multiply this with S_0
+        ln_stock_process = np.cumsum((self.interest_rate - 0.5 * self.volatility ** 2) * dt +
+                                     self.volatility * np.random.normal(0, np.sqrt(dt),
+                                                                        (n_paths, number_of_steps)), 1)
 
-        # starting prices, for the first column
-        first_column = np.ones((amount_paths, 1)) * start_price
+        # adding 0 column, to get 1 when we take the exponential (so the fist valus is the start_price)
+        ln_stock_process = np.append(np.zeros((n_paths, 1)), ln_stock_process, axis=1)
 
-        # adding start_price as first element
-        stock_process = np.append(first_column, stock_process, axis=1)
+        # because we simulated the ln(S_t) we need top take the exponential and multiply this value with the start_price
+        stock_process = start_price * np.exp(ln_stock_process)
 
         return stock_process
 
@@ -540,7 +541,7 @@ class VarianceGamma(StockModel):
         return np.cumsum(gamma_process_plus - gamma_process_min, axis=1)
 
     def variance_process_brownian_motion(self,
-                                         amount_paths: int,
+                                         n_paths: int,
                                          maturity: int = 1,
                                          steps_per_maturity: int = 100):
         """
@@ -550,7 +551,7 @@ class VarianceGamma(StockModel):
 
         Based on the paper "Variance-Gamma and Monte Carlo" from Michael C. Fu
 
-        :param amount_paths: Positive integer.
+        :param n_paths: Positive integer.
                             This is the total number of paths generated.
         :param maturity: Positive integer.
                         The total time period for the simulation.
@@ -567,8 +568,8 @@ class VarianceGamma(StockModel):
         size_increments = 1 / steps_per_maturity
 
         # Variance Gamma process which is based on a Brownian motion
-        gamma_process = np.random.gamma(size_increments / self.kurtosis, self.kurtosis, (amount_paths, number_of_steps))
-        brownian_motion = np.random.randn(amount_paths, number_of_steps)
+        gamma_process = np.random.gamma(size_increments / self.kurtosis, self.kurtosis, (n_paths, number_of_steps))
+        brownian_motion = np.random.randn(n_paths, number_of_steps)
 
         return np.cumsum(self.skewness * gamma_process + self.volatility * np.sqrt(gamma_process) * brownian_motion,
                          axis=1)
@@ -823,16 +824,17 @@ class HestonModel(StockModel):
         all_volatilities[all_volatilities < 0] = 0
 
         # start of the Stock model process
-        rate = self.interest_rate * dt
+        drift = (self.interest_rate - 0.5 * all_volatilities) * dt
         vol = np.sqrt(all_volatilities) * brownianmotion_stock_processes
 
-        # taking the product of the previous elements til the end.
-        # not take first element of 'vol' because this is already 0, otherwise it wil get one time to much interest
-        total_process = np.cumprod(1 + rate + vol, 1)
+        # the ln(S_t) = ln(S_{t-1}) + (r - 0.5 * sigma)dt + sqrt(sigma)* N(0, dt)
+        # this is the reason we take the 'cumsum'
+        total_process_ln = np.cumsum(drift + vol, axis=1)
 
-        first_column_stock = np.ones((n_paths, 1))
-        total_process = np.append(first_column_stock, total_process, axis=1)
-        total_process *= start_price
+        # adding 0, to get 1 when we take the exponential the first element will be the start_price
+        total_process_ln = np.append(np.zeros((n_paths, 1)), total_process_ln, axis=1)
+
+        total_process = np.exp(total_process_ln) * start_price
 
         return total_process
 
@@ -879,16 +881,17 @@ class HestonModel(StockModel):
         # This cause problems because the square root is taken for the volatility.
         all_volatilities[all_volatilities < 0] = 0
 
-        rate = self.interest_rate * dt
+        drift = (self.interest_rate - 0.5 * all_volatilities) * dt
         vol = np.sqrt(all_volatilities) * brownianmotion_stock_processes
 
-        # taking the product of the previous elements til the end.
-        # not take first element of 'vol' because this is already 0, otherwise it wil get one time to much interest
-        total_process = np.cumprod(1 + rate + vol, 1)
+        # the ln(S_t) = ln(S_{t-1}) + (r - 0.5 * sigma)dt + sqrt(sigma)* N(0, dt)
+        # this is the reason we take the 'cumsum'
+        total_process_ln = np.cumsum(drift + vol, axis=1)
 
-        first_column_stock = np.ones((n_paths, 1))
-        total_process = np.append(first_column_stock, total_process, axis=1)
-        total_process *= start_price
+        # adding 0, to get 1 when we take the exponential
+        total_process_ln = np.append(np.zeros((n_paths, 1)), total_process_ln, axis=1)
+
+        total_process = np.exp(total_process_ln) * start_price
 
         return total_process, all_volatilities
 
@@ -926,13 +929,14 @@ class HestonModel(StockModel):
                 last_vol = volatilities[-1]
                 not_negative_vol = max(last_vol, 0)
 
-                dS = last_price * (self.interest_rate * dt + np.sqrt(not_negative_vol) * bm_stock[i])
+                S = last_price * np.exp((self.interest_rate - 0.5 * not_negative_vol) * dt +
+                                        np.sqrt(not_negative_vol) * bm_stock[i])
                 dnu = self.rate_revert_to_long * (self.long_variance - not_negative_vol) * dt + \
                       self.volatility_of_volatility * \
                       np.sqrt(not_negative_vol) * bm_volatility[i]
 
                 # adding the next stock prices and volatilities
-                stock_prices.append(stock_prices[-1] + dS)
+                stock_prices.append(S)
                 volatilities.append(volatilities[-1] + dnu)
             all_stock_prices.append(stock_prices)
             all_volatilities.append(volatilities)
@@ -967,7 +971,7 @@ class HestonModel(StockModel):
         dt = 1 / steps_per_maturity
         number_of_steps = maturity * steps_per_maturity
 
-        # brownian_motions = np.random.randn(2, number_of_steps)
+        # creates 2 paths
         brownian_motions = np.random.randn(n_paths, 2, number_of_steps)
 
         # declare the matrix to get the correlation
@@ -977,6 +981,7 @@ class HestonModel(StockModel):
         correlated_process = np.array(list(map(lambda x: matrix_pro.dot(x), brownian_motions)))
 
         # put everything in the correct form of matrix and the correct values(jumps) of the process.
+        # multiply with sqrt(dt) to scale the normal distribution
         total_process_paths = np.array([[brownian_motions[i, 0], correlated_process[i]] for i in range(n_paths)]) \
                               * np.sqrt(dt)
 
