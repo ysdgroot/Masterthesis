@@ -1,5 +1,6 @@
 import timeit
 import numpy as np
+import math
 
 
 def stockpaths_bs_naive(maturity=10,
@@ -7,7 +8,7 @@ def stockpaths_bs_naive(maturity=10,
                         interest_rate=0.01,
                         volatility=0.1,
                         start_price=100,
-                        amount_paths=10000):
+                        n_paths=10000):
     # the amount of timesteps needed for the stockprice
     number_of_steps = maturity * steps_per_maturity
     # length for each step
@@ -16,7 +17,7 @@ def stockpaths_bs_naive(maturity=10,
     # make list for all the paths
     full_path_list = []
 
-    for j in range(amount_paths):
+    for j in range(n_paths):
         # each path starts with the start_price
         one_path_list = [start_price]
         # this value will change continuously for the changes
@@ -25,8 +26,8 @@ def stockpaths_bs_naive(maturity=10,
         random_values = np.random.normal(0, np.sqrt(dt), number_of_steps)
         for index, i in enumerate(range(number_of_steps)):
             # the change for the stock price
-            next_price = previous_price * np.exp((interest_rate - 0.5 * volatility ** 2) * dt +
-                                                 volatility * random_values[index])
+            next_price = previous_price * math.exp((interest_rate - 0.5 * volatility ** 2) * dt +
+                                                   volatility * random_values[index])
             one_path_list.append(next_price)
             previous_price = next_price
         # append the list prices of 1 path to list with all the paths
@@ -64,7 +65,7 @@ def stockpaths_bs_vector(maturity=10,
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def variance_process_func(amount_paths: int,
+def variance_process_func(n_paths: int,
                           maturity: int = 1,
                           steps_per_maturity: int = 100,
                           skewness=-0.1,
@@ -79,9 +80,9 @@ def variance_process_func(amount_paths: int,
 
     # Variance Gamma process is the difference of 2 Gamma processes
     gamma_process_plus = np.random.gamma(size_increments / kurtosis, kurtosis * mu_plus,
-                                         (amount_paths, number_of_steps))
+                                         (n_paths, number_of_steps))
     gamma_process_min = np.random.gamma(size_increments / kurtosis, kurtosis * mu_min,
-                                        (amount_paths, number_of_steps))
+                                        (n_paths, number_of_steps))
 
     return np.cumsum(gamma_process_plus - gamma_process_min, axis=1)
 
@@ -230,8 +231,8 @@ def stockpaths_h_naive(maturity=10,
             last_vol = volatilities[-1]
             not_negative_vol = max(last_vol, 0)
 
-            S = last_price * np.exp((interest_rate - 0.5 * not_negative_vol) * dt +
-                                    np.sqrt(not_negative_vol) * bm_stock[i])
+            S = last_price * math.exp((interest_rate - 0.5 * not_negative_vol) * dt +
+                                      math.sqrt(not_negative_vol) * bm_stock[i])
             dnu = rate_revert_to_long * (long_variance - not_negative_vol) * dt + \
                   volatility_of_volatility * \
                   np.sqrt(not_negative_vol) * bm_volatility[i]
@@ -279,7 +280,7 @@ def stockpaths_h_partvector(maturity=10,
             not_negative_vol = max(last_vol, 0)
 
             dnu = rate_revert_to_long * (long_variance - not_negative_vol) * dt + \
-                  volatility_of_volatility * np.sqrt(not_negative_vol) * bm_volatility[i]
+                  volatility_of_volatility * math.sqrt(not_negative_vol) * bm_volatility[i]
             volatilities.append(last_vol + dnu)
         all_volatilities.append(volatilities)
     # change it to a numpy array.
@@ -390,3 +391,4 @@ speed_h_partvector = timeit.timeit(stockpaths_h_partvector, number=100)
 print(f"Speed H partvector: {speed_h_partvector}")
 speed_h_fastest = timeit.timeit(stockpaths_h_fastest, number=100)
 print(f"Speed H fastest: {speed_h_fastest}")
+
