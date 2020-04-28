@@ -14,6 +14,8 @@ option_names = ["Standard", "Asian", "Lookback"]
 dict_option_names_nl = dict(zip(option_names, ["Standaard", "Aziatische", "Lookback"]))
 evaluate_options = [True, True, True]
 
+plot_legend = False
+
 plot_mean = True
 plot_min_max = False
 
@@ -25,8 +27,8 @@ percentile = 1
 restriction = None
 
 # column name from the csv file as the X-variable
-x_name = "paths"
-# x_name = "time_step"
+# x_name = "paths"
+x_name = "time_step"
 
 # column name from de csv file as Y-variable
 y_name = "option_price"
@@ -76,21 +78,22 @@ def get_filename(model, option_type):
 
 
 def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_max=False, plot_mean=False,
-                         restriction=None, plot_percentile=False, percentile=1):
+                         restriction=None, plot_percentile=False, percentile=1, plot_legend=True):
     """
-    # todo: comments schrijven!
-    :param data:
-    :param x_name:
-    :param y_name:
-    :param title:
-    :param xlabel:
-    :param ylabel:
-    :param plot_min_max:
-    :param plot_mean:
-    :param restriction:
-    :param plot_percentile:
-    :param percentile:
-    :return:
+    :param data: pandas.DataFrame whith x_name and y_name as columns
+    :param x_name: "paths" or "time_step"
+    :param y_name:"option_price" or for the standard BS-model "relative_diff"
+    :param title:str, title of the plot
+    :param xlabel:str, name x-axis plot
+    :param ylabel:str, name y-axis plot
+    :param plot_min_max: bool (default=False), if the minimum and maximum also needs to be plotted
+    :param plot_mean: bool (default=False), if the mean also needs to be plotted
+    :param restriction: triple (column, value_minimum, value_maximum) or None (default=None)
+                        If the plot needs to be restricted.
+    :param plot_percentile: bool (default=False), if the percentile also needs to be plotted
+    :param percentile: float, if plot_percentile=True, the value of the percentile.
+    :return: None
+            Generate a scatterplot.
     """
     data_x = data[x_name]
     data_y = data[y_name]
@@ -120,7 +123,7 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
 
         # the lines are the same for the minimum and maximum
         legend_variables.append(line_min)
-        legend_variable_names.append("Minimum and maximum")
+        legend_variable_names.append("Minimum en maximum")
 
     if plot_percentile:
         percentile_max = 100 - percentile
@@ -149,7 +152,8 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
         restrictions = [("paths", 1000, 5000), ("paths", 6000, 10000), ("paths", 11000, 15000), ("paths", 16000, 20000)]
     else:
         restrictions = [("time_step", 5, 50), ("time_step", 55, 100), ("time_step", 200, 600), ("time_step", 700, 1000)]
-    # todo deze stuk code verwijderen
+
+    # start plotting the restrictions
     for restrict in restrictions:
         scat_points = plt.scatter(data_x[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])],
                                   data_y[(restrict[1] <= data[restrict[0]]) & (data[restrict[0]] <= restrict[2])])
@@ -165,65 +169,10 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
-    plt.legend(legend_variables, legend_variable_names)
+    if plot_legend:
+        plt.legend(legend_variables, legend_variable_names)
 
     plt.show()
-
-
-def test_bar_plot(data,
-                  title="",
-                  xlabel="",
-                  ylabel="",
-                  n_splits=4):
-    # x_name = "time_step"
-    y_name = "option_price"
-
-    x_name = "paths"
-
-    data_x = data[x_name]
-    data_y = data[y_name]
-
-    labels = data_x.unique() // 1000
-
-    list_mean_1 = []
-    list_mean_2 = []
-    list_mean_3 = []
-    list_mean_4 = []
-
-    for time_step in data_x.unique():
-        positions_time_step = data_x == time_step
-
-        # list_mean_1.append(np.var(data_y[positions_time_step & (data["paths"] >= 1000) & (data["paths"] <= 5000)]))
-        # list_mean_2.append(np.var(data_y[positions_time_step & (data["paths"] >= 6000) & (data["paths"] <= 10000)]))
-        # list_mean_3.append(np.var(data_y[positions_time_step & (data["paths"] >= 11000) & (data["paths"] <= 15000)]))
-        # list_mean_4.append(np.var(data_y[positions_time_step & (data["paths"] >= 16000) & (data["paths"] <= 20000)]))
-
-        list_mean_1.append(np.var(data_y[positions_time_step & (data["time_step"] >= 5) & (data["time_step"] <= 20)]))
-        list_mean_2.append(np.var(data_y[positions_time_step & (data["time_step"] >= 5) & (data["time_step"] <= 50)]))
-        list_mean_3.append(np.var(data_y[positions_time_step & (data["time_step"] >= 55) & (data["time_step"] <= 75)]))
-        list_mean_4.append(
-            np.var(data_y[positions_time_step & (data["time_step"] >= 900) & (data["time_step"] <= 1000)]))
-
-    x = np.arange(len(labels))  # the label locations
-    width = 0.2  # the width of the bars
-
-    fig, ax = plt.subplots()
-    rects1 = ax.bar(x - 3 * width / 2, list_mean_1, width, label='klasse 1')
-    rects2 = ax.bar(x - width / 2, list_mean_2, width, label='klasse 2')
-    rects3 = ax.bar(x + width / 2, list_mean_3, width, label='klasse 3')
-    rects4 = ax.bar(x + 3 * width / 2, list_mean_4, width, label='klasse 4')
-
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Option price')
-    ax.set_xlabel('Number of paths')
-    ax.set_title('Performance')
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels)
-    ax.legend()
-    # ax.set_ylim([31, 35])
-
-    plt.show()
-
 
 ########################################################################################################################
 
@@ -246,7 +195,8 @@ if any(evaluate_options) and any(evaluate_options):
                                          plot_min_max=plot_min_max,
                                          plot_percentile=plot_percentile,
                                          percentile=percentile,
-                                         restriction=restriction)
+                                         restriction=restriction,
+                                         plot_legend=plot_legend)
                 else:
                     plot_change_variance(data_options,
                                          x_name,
@@ -258,4 +208,5 @@ if any(evaluate_options) and any(evaluate_options):
                                          plot_min_max=plot_min_max,
                                          plot_percentile=plot_percentile,
                                          percentile=percentile,
-                                         restriction=restriction)
+                                         restriction=restriction,
+                                         plot_legend=plot_legend)

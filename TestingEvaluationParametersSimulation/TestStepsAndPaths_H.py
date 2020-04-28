@@ -19,9 +19,9 @@ number_iterations = 50
 max_paths_generating = 5000
 
 # The different file_name to write through
-file_name_standard = 'Datafiles/Test-steps and accuracy-H-Standard.csv'
-file_name_asian = 'Datafiles/Test-steps and accuracy-H-Asian.csv'
-file_name_lookback_min = 'Datafiles/Test-steps and accuracy-H-Lookback.csv'
+file_name_standard = 'Datafiles/Heston/Test-steps and accuracy-H-Standard.csv'
+file_name_asian = 'Datafiles/Heston/Test-steps and accuracy-H-Asian.csv'
+file_name_lookback_min = 'Datafiles/Heston/Test-steps and accuracy-H-Lookback.csv'
 
 file_names = [file_name_standard, file_name_asian, file_name_lookback_min]
 

@@ -15,9 +15,9 @@ do_tests = [True, True, True]
 number_iterations = 50
 
 # The different file_name to write through
-file_name_standard = 'Datafiles/Test-steps and accuracy-BS-Standard.csv'
-file_name_asian = 'Datafiles/Test-steps and accuracy-BS-Asian.csv'
-file_name_lookback_min = 'Datafiles/Test-steps and accuracy-BS-Lookback.csv'
+file_name_standard = 'Datafiles/Black Scholes/Test-steps and accuracy-BS-Standard.csv'
+file_name_asian = 'Datafiles/Black Scholes/Test-steps and accuracy-BS-Asian.csv'
+file_name_lookback_min = 'Datafiles/Black Scholes/Test-steps and accuracy-BS-Lookback.csv'
 
 file_names = [file_name_standard, file_name_asian, file_name_lookback_min]
 
@@ -67,7 +67,7 @@ def write_comment_info_and_header(file_n, option_name):
         fd.write("# Black Scholes model \n")
         fd.write(f'# Maturity = {maturity} \n')
         fd.write(f'# Interest_rate = {interest_rate} \n')
-        fd.write(f"# Volatitlity = {volatitlity}")
+        fd.write(f"# Volatitlity = {volatitlity}\n")
         fd.write(f"# Start_price = {start_price} \n")
         fd.write(f"# Strike_price = {strike_price} \n")
         fd.write(f"# Option = {option_name} \n")
