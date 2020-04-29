@@ -245,7 +245,7 @@ if make_VG_data:
     maturity_bound = (1, 25) if not test_data_vg else (1, 21)
 
     skewness_bound = (-0.35, -0.05) if not test_data_vg else (-0.3, -0.1)
-    volatility_bound = (0.05, 0.45) if not test_data_vg else (0.015, 0.4)
+    volatility_bound = (0.05, 0.45) if not test_data_vg else (0.1, 0.4)
     kurtosis_bound = (0.55, 0.95) if not test_data_vg else (0.6, 0.9)
 
     # change the seeds when using test_data, so there is no interference between test and training data
@@ -370,7 +370,7 @@ if make_heston_data:
 
     start_volatility_bound = (0.01, 0.1) if not test_data_h else (0.02, 0.09)
     long_variance_bound = (0.01, 0.1) if not test_data_h else (0.02, 0.09)
-    rate_revert_to_long_bound = (1.4, 2.6) if not test_data_h else (1.6, 2.4)
+    rate_revert_to_long_bound = (1.4, 2.6) if not test_data_h else (1.5, 2.5)
     correlation_bound = (-0.85, -0.5) if not test_data_h else (-0.8, -0.55)
     vol_of_vol_bound = (0.45, 0.75) if not test_data_h else (0.5, 0.7)
 
