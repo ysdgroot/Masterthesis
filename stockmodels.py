@@ -172,7 +172,7 @@ class BlackScholes(StockModel):
                          steps_per_maturity: int = 100,
                          seed: int = None):
         """
-        Simulations of stock prices based on the Black Scholes model,
+        Simulations of stock prices based on the Black Scholes stockmodel,
         this means the stock prices follows the Geometric Brownian Motion.
 
         :param n_paths: Positive integer.
@@ -190,7 +190,7 @@ class BlackScholes(StockModel):
                     If value is different from None, the function np.random.seed(seed) will be called.
                     For replication purposes, to get same 'random' values.
 
-        :return: 2d numpy.array of all the generated paths, based on the Black Scholes model.
+        :return: 2d numpy.array of all the generated paths, based on the Black Scholes stockmodel.
                 shape:
                         (amount, maturity * time_step_per_maturity + 1)
                 Each row represents a different path, the columns the time.
@@ -264,7 +264,7 @@ class BlackScholes(StockModel):
                              interest_rate: float,
                              volatility: float):
         """
-            Calculating the call option based on the Black Scholes model.
+            Calculating the call option based on the Black Scholes stockmodel.
             The Stock price is the Geometric Brownian Motion
             This assumes the interest rate and volatility are constant during the time of maturity.
 
@@ -280,7 +280,7 @@ class BlackScholes(StockModel):
             :param volatility: Positive float or np.array with same length as any other parameters.
                                 The volatility of the stock, per time maturity.
             :return: Positive float or np.array of the same length as the input
-                    Price of a call-option based on the BS model
+                    Price of a call-option based on the BS stockmodel
             """
         d_plus, d_min = BlackScholes.help_function(start_price, strike_price, maturity, interest_rate, volatility)
 
@@ -293,7 +293,7 @@ class BlackScholes(StockModel):
                             interest_rate: float,
                             volatility: float):
         """
-            Calculating the put option based on the Black Scholes model.
+            Calculating the put option based on the Black Scholes stockmodel.
             The Stock price is the Geometric Brownian Motion
             This assumes the interest rate and volatility are constant during the time of maturity.
 
@@ -309,7 +309,7 @@ class BlackScholes(StockModel):
             :param volatility: Positive float or np.array with same length as any other parameters.
                                 The volatility of the stock, per time maturity.
             :return: Positive float or np.array of the same length as the input
-                    Price of a put-option based on the BS model.
+                    Price of a put-option based on the BS stockmodel.
             """
         d_plus, d_min = BlackScholes.help_function(start_price, strike_price, maturity, interest_rate, volatility)
 
@@ -325,7 +325,7 @@ class BlackScholes(StockModel):
                                   forward_pricing: bool = False,
                                   seed: int = None):
         """
-        Generation of random values for the Back Scholes model.
+        Generation of random values for the Back Scholes stockmodel.
 
         :param amount: positive integer, number of random variables generated
         :param stock_price_bound: float, tuple or list; only the first 2 elements will be used. (positive values)
@@ -448,7 +448,7 @@ class VarianceGamma(StockModel):
                          steps_per_maturity: int = 100,
                          seed: int = None):
         """
-        Simulations of stock prices based on the Variance Gamma model.
+        Simulations of stock prices based on the Variance Gamma stockmodel.
 
         :param amount_paths: Positive integer.
                             This is the total number of paths generated.
@@ -463,7 +463,7 @@ class VarianceGamma(StockModel):
                                         but more time consuming
         :param seed: Positive integer. (default = None)
                     For replication purposes, to get same 'random' values.
-        :return: 2d numpy.array of all the generated paths, based on Variance Gamma model.
+        :return: 2d numpy.array of all the generated paths, based on Variance Gamma stockmodel.
                 shape:
                         (amount, maturity * time_step_per_maturity + 1)
                 Each row represents a different path, the columns the time.
@@ -478,7 +478,7 @@ class VarianceGamma(StockModel):
         # omega based on the article
         omega = np.log(1 - self.skewness * self.kurtosis - self.kurtosis * self.volatility ** 2 / 2) / self.kurtosis
 
-        # the process based on the variance gamma model, each increment or decrement for each time_step
+        # the process based on the variance gamma stockmodel, each increment or decrement for each time_step
         # variance_process = self.variance_process(amount,
         #                                          time_step_per_maturity=time_step_per_maturity,
         #                                          maturity=maturity, seed=seed)
@@ -587,7 +587,7 @@ class VarianceGamma(StockModel):
                                   seed: int = None):
         """
 
-        The generation of random variables for the Variance Gamma model.
+        The generation of random variables for the Variance Gamma stockmodel.
 
         :param amount: A positive integer.
                         The amount of different values, of each parameter.
@@ -725,7 +725,7 @@ class HestonModel(StockModel):
                  correlation_processes: float):
         """
         :param interest_rate: A positive value.
-                            For the fixed interest rate for the Heston model.
+                            For the fixed interest rate for the Heston stockmodel.
         :param start_volatility: A positive value.
                                 The starting position of the volatility.
         :param long_volatility: A positive value.
@@ -754,7 +754,7 @@ class HestonModel(StockModel):
                          steps_per_maturity: int = 100,
                          seed: int = None):
         """
-        Simulations of stock prices based on the Heston model.
+        Simulations of stock prices based on the Heston stockmodel.
 
         :param n_paths: Positive integer.
                             This is the total number of paths generated.
@@ -769,7 +769,7 @@ class HestonModel(StockModel):
                                         but more time consuming
         :param seed: Positive integer. (default = 42)
                     For replication purposes, to get same 'random' values.
-        :return: 2d numpy.array of all the generated paths and volatilities, based on the Heston model.
+        :return: 2d numpy.array of all the generated paths and volatilities, based on the Heston stockmodel.
                 shape:
                        (2, (amount, maturity * time_step_per_maturity + 1))
                 First element is the generated paths, the second the generated volatilities (positive or 0) of each path
@@ -823,7 +823,7 @@ class HestonModel(StockModel):
         # This cause problems because the square root is taken for the volatility.
         all_volatilities[all_volatilities < 0] = 0
 
-        # start of the Stock model process
+        # start of the Stock stockmodel process
         drift = (self.interest_rate - 0.5 * all_volatilities) * dt
         vol = np.sqrt(all_volatilities) * brownianmotion_stock_processes
 
