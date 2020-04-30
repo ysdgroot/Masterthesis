@@ -118,7 +118,7 @@ def stockpaths_vg_diff_gamma(maturity=10,
     # omega based on the article
     omega = np.log(1 - skewness * kurtosis - kurtosis * volatility ** 2 / 2) / kurtosis
 
-    # the process based on the variance gamma model, each increment or decrement for each time_step
+    # the process based on the variance gamma stockmodel, each increment or decrement for each time_step
     variance_process = variance_process_func(amount_paths,
                                              steps_per_maturity=steps_per_maturity,
                                              maturity=maturity)
@@ -357,7 +357,7 @@ def stockpaths_h_fastest(maturity=10,
     # This cause problems because the square root is taken for the volatility.
     all_volatilities[all_volatilities < 0] = 0
 
-    # start of the Stock model process
+    # start of the Stock stockmodel process
     drift = (interest_rate - 0.5 * all_volatilities) * dt
     vol = np.sqrt(all_volatilities) * brownianmotion_stock_processes
 
