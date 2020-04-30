@@ -5,17 +5,17 @@ import numpy as np
 import csv
 from datetime import datetime
 
-# BS model
+# BS stockmodel
 make_BS_data = False
 forward_pricing_BS = False
 test_data_bs = False
 
-# VG model
+# VG stockmodel
 make_VG_data = False
 forward_pricing_VG = False
 test_data_vg = False
 
-# Heston model
+# Heston stockmodel
 make_heston_data = False
 forward_pricing_heston = False
 test_data_h = False
@@ -57,13 +57,13 @@ def write_to_file_parallel(name_file, queue):
 def create_name_file(model, forward_pricing_bool=False, testing=False):
     """
     Function to generate a file name, for a csv object, and will be stored in the "GeneratedData" folder.
-    The name depends on model, the usage of the forward_pricing (percentage) and if the data is test/training data.
+    The name depends on stockmodel, the usage of the forward_pricing (percentage) and if the data is test/training data.
     :param model: str, normally "BS","VG" or "H".
                 No problems will occur when using another modelname.
     :param forward_pricing_bool: bool, True: for the usage of the forward pricing; False: otherwise
     :param testing: bool, True: when the data is test data; False: data is training data.
     :return: str, the file name
-            GeneratedData/Generated Data - {model} model - {date_today}{forward_bool}{test_file}.csv"
+            GeneratedData/Generated Data - {stockmodel} stockmodel - {date_today}{forward_bool}{test_file}.csv"
 
         date_today = '%d-%m-%y'
         forward_bool = (F) when 'forward_pricing_bool'=True
@@ -73,7 +73,7 @@ def create_name_file(model, forward_pricing_bool=False, testing=False):
     date_today = datetime.now().strftime('%d-%m-%Y')
     forward_bool = "(F)" if forward_pricing_bool else ""
     test_file = "-Test data" if testing else ""
-    return f"GeneratedData/Generated Data - {model} model - {date_today}{forward_bool}{test_file}.csv"
+    return f"GeneratedData/Generated Data - {model} stockmodel - {date_today}{forward_bool}{test_file}.csv"
 
 
 def get_comment_line(name, value):
@@ -153,7 +153,7 @@ if make_BS_data:
 
     col_names = ["seed"] + column_names_values + column_names_options
 
-    # adding last column for the theoretical value of the option, only for BS model
+    # adding last column for the theoretical value of the option, only for BS stockmodel
     col_names.append("opt_exact_standard")
 
     # write the info into the files
@@ -237,7 +237,7 @@ if make_VG_data:
         seed_values += 1
         seed_paths += 1
 
-    # Setting boundaries for each parameter of the Variance Gamma model.
+    # Setting boundaries for each parameter of the Variance Gamma stockmodel.
     stock_price_bound = (90, 110) if not test_data_vg else (95, 105)
     strike_price_bound = (0.4, 1.6) if not test_data_vg else (0.6, 1.4)
     interest_rate_bound = (0, 0.035) if not test_data_vg else (0.001, 0.03)
@@ -462,7 +462,7 @@ if make_heston_data:
         vol_of_vol = vol_of_vols[position]
         correlation = correlations[position]
 
-        # making object of the Heston model
+        # making object of the Heston stockmodel
         heston = HestonModel(interest_rate, start_vol, long_variance, rate_reversion, vol_of_vol, correlation)
 
         # start simulation and calculation of the different option_types
