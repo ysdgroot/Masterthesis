@@ -44,7 +44,7 @@ dict_label_name = {"paths": "Aantal paden",
                    }
 x_label = dict_label_name[x_name]
 
-# Standard title of the plot, first the option type and then the Stock model
+# Standard title of the plot, first the option type and then the Stock stockmodel
 title_plot = "Variantie prijs {} optie - {}"
 title_plot_standard_BS = "Prestatie Simulatie vs Theorie - {}"
 
@@ -56,11 +56,11 @@ dict_title_restriction = {"paths": "-Paden=({},{})",
 ########################################################################################################################
 def read_data(model, option_type):
     """
-    Read and return the data from a model and option type.
+    Read and return the data from a stockmodel and option type.
 
     :param model: str (BS, VG or H)
     :param option_type: str, ("Standard", "Asian", "Lookback")
-    :return: pd.Dataframe (columns depends on the model)
+    :return: pd.Dataframe (columns depends on the stockmodel)
     """
     filename = get_filename(model, option_type)
     data = pd.read_csv(filename, header=0, comment='#')
@@ -82,7 +82,7 @@ def plot_change_variance(data, x_name, y_name, title, xlabel, ylabel, plot_min_m
     """
     :param data: pandas.DataFrame whith x_name and y_name as columns
     :param x_name: "paths" or "time_step"
-    :param y_name:"option_price" or for the standard BS-model "relative_diff"
+    :param y_name:"option_price" or for the standard BS-stockmodel "relative_diff"
     :param title:str, title of the plot
     :param xlabel:str, name x-axis plot
     :param ylabel:str, name y-axis plot

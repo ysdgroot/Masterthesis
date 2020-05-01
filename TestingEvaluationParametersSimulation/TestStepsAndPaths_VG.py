@@ -62,7 +62,7 @@ def write_comment_info_and_header(file_n, option_name):
     col_names = ['time_step', 'paths', 'time', 'option_price', 'variance']
 
     with open(file_n, 'w', newline='') as fd:
-        fd.write("# Variance Gamma model \n")
+        fd.write("# Variance Gamma stockmodel \n")
         fd.write(f'# Maturity = {maturity} \n')
         fd.write(f'# Interest_rate = {interest_rate} \n')
         fd.write(f"# Skewness = {skewness} \n")

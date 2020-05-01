@@ -59,12 +59,12 @@ def write_comment_info_and_header(file_n, option_name):
     """
 
     col_names = ['time_step', 'paths', 'time', 'option_price', 'variance']
-    # different test for the BS model and plainvanilla option
+    # different test for the BS stockmodel and plainvanilla option
     if option_name == "Plainvanilla":
         col_names += ["relative_diff", "absolute_diff", "exact_price"]
 
     with open(file_n, 'w', newline='') as fd:
-        fd.write("# Black Scholes model \n")
+        fd.write("# Black Scholes stockmodel \n")
         fd.write(f'# Maturity = {maturity} \n')
         fd.write(f'# Interest_rate = {interest_rate} \n')
         fd.write(f"# Volatitlity = {volatitlity}\n")
