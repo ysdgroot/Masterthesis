@@ -62,12 +62,14 @@ def stochastic_process(t=50):
                     np.cumsum([0] + random.choices([-1, 1], k=t - 1))]
 
     # make stochastic process
-    # Start with 1, +1 when 2 times in a row is +1 and -1 when 2 times in a row -1
+    # Start with 1, +1 when 2 times in a row is +1 and -3 when 2 times in a row -1
     stochastic_processes = []
     for random_walk in random_walks:
         process = [1, 1]
         for index in range(2, len(random_walk)):
-            if random_walk[index - 2] < random_walk[index] and random_walk[index - 1] < random_walk[index]:
+            if random_walk[index] == 3 or random_walk[index] == -3:
+                process.append(0)
+            elif random_walk[index - 2] < random_walk[index] and random_walk[index - 1] < random_walk[index]:
                 process.append(process[-1] - 1)
             elif random_walk[index - 2] > random_walk[index] and random_walk[index - 1] > random_walk[index]:
                 process.append(process[-1] + 1)
