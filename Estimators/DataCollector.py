@@ -364,4 +364,3 @@ class DataManagerRealData:
         return training_data[self.columns_x], training_data[self.columns_y], test_data[self.columns_x], test_data[
             self.columns_y]
 
-    # todo: verwijderen
